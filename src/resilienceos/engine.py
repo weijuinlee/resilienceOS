@@ -187,6 +187,9 @@ def _safe_int(value: float, low: int, high: int) -> int:
 def _extract_json_block(text: str) -> str | None:
     if not text:
         return None
+    fenced = re.search(r"```(?:json)?\\s*([\\s\\S]*?)```", text, flags=re.IGNORECASE)
+    if fenced:
+        text = fenced.group(1).strip()
     match = re.search(r"\{[\s\S]*\}", text)
     if match:
         return match.group(0)
@@ -261,61 +264,80 @@ def _call_openai_for_json(prompt: str, max_tokens: int | None = None) -> tuple[D
         "response_format": {"type": "json_object"},
     }
 
-    request = urllib.request.Request(
-        endpoint,
-        data=json.dumps(request_body).encode("utf-8"),
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        method="POST",
-    )
+    requested_tokens = max_tokens or config["max_tokens"]
+    for attempt in range(2):
+        request_body["max_tokens"] = requested_tokens
 
-    try:
-        with urllib.request.urlopen(request, timeout=config["timeout"]) as response:
-            raw = response.read().decode("utf-8")
-            _trace_openai("json", f"status={getattr(response, 'status', 'n/a')} bytes={len(raw)}")
-            response_data = json.loads(raw)
-            request_id = response.headers.get("x-request-id") if hasattr(response, "headers") else None
-            if request_id:
-                _trace_openai("json", f"request_id={request_id}")
-            usage = response_data.get("usage") if isinstance(response_data, dict) else None
-            if isinstance(usage, dict):
-                prompt_tokens = usage.get("prompt_tokens", "n/a")
-                completion_tokens = usage.get("completion_tokens", "n/a")
-                total_tokens = usage.get("total_tokens", "n/a")
-                _trace_openai(
-                    "json",
-                    f"usage prompt={prompt_tokens} completion={completion_tokens} total={total_tokens}",
-                )
-    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as error:
-        _trace_openai("json", f"error={error!r}")
-        return None, f"error:{error!r}"
+        request = urllib.request.Request(
+            endpoint,
+            data=json.dumps(request_body).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            method="POST",
+        )
 
-    choices = response_data.get("choices") if isinstance(response_data, dict) else None
-    if not isinstance(choices, list) or not choices:
-        return None, "error:invalid-response"
+        try:
+            with urllib.request.urlopen(request, timeout=config["timeout"]) as response:
+                raw = response.read().decode("utf-8")
+                _trace_openai("json", f"status={getattr(response, 'status', 'n/a')} bytes={len(raw)}")
+                response_data = json.loads(raw)
+                request_id = response.headers.get("x-request-id") if hasattr(response, "headers") else None
+                if request_id:
+                    _trace_openai("json", f"request_id={request_id}")
+                usage = response_data.get("usage") if isinstance(response_data, dict) else None
+                if isinstance(usage, dict):
+                    prompt_tokens = usage.get("prompt_tokens", "n/a")
+                    completion_tokens = usage.get("completion_tokens", "n/a")
+                    total_tokens = usage.get("total_tokens", "n/a")
+                    _trace_openai(
+                        "json",
+                        f"usage prompt={prompt_tokens} completion={completion_tokens} total={total_tokens}",
+                    )
+        except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as error:
+            _trace_openai("json", f"error={error!r}")
+            return None, f"error:{error!r}"
 
-    message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
-    content = message.get("content") if isinstance(message, dict) else None
-    if not isinstance(content, str) or not content.strip():
-        _trace_openai("json", "empty content from model")
-        return None, "error:empty-content"
+        choices = response_data.get("choices") if isinstance(response_data, dict) else None
+        if not isinstance(choices, list) or not choices:
+            return None, "error:invalid-response"
 
-    payload = _extract_json_block(content.strip())
-    if not payload:
-        return None, "error:non-json-content"
+        message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
+        content = message.get("content") if isinstance(message, dict) else None
+        finish_reason = choices[0].get("finish_reason") if isinstance(choices[0], dict) else None
+        if not isinstance(content, str) or not content.strip():
+            _trace_openai("json", "empty content from model")
+            return None, "error:empty-content"
 
-    try:
-        parsed = json.loads(payload)
-    except json.JSONDecodeError as error:
-        _trace_openai("json", f"invalid-json: {error}")
-        return None, f"error:invalid-json:{error}"
+        payload = _extract_json_block(content.strip())
+        if not payload:
+            if attempt == 0 and finish_reason == "length":
+                requested_tokens = max(requested_tokens * 2, 512)
+                _trace_openai("json", "json parse retry: empty extract due length limit")
+                continue
+            return None, "error:non-json-content"
 
-    if not isinstance(parsed, dict):
-        return None, "error:not-object"
-    return parsed, str(config["model"])
+        try:
+            parsed = json.loads(payload)
+        except json.JSONDecodeError as error:
+            _trace_openai("json", f"invalid-json: {error}")
+            if attempt == 0 and finish_reason == "length":
+                requested_tokens = max(requested_tokens * 2, 512)
+                _trace_openai("json", "json parse retry: retry with longer max_tokens")
+                continue
+            return None, f"error:invalid-json:{error}"
+
+        if not isinstance(parsed, dict):
+            if attempt == 0 and finish_reason == "length":
+                requested_tokens = max(requested_tokens * 2, 512)
+                continue
+            return None, "error:not-object"
+
+        return parsed, str(config["model"])
+
+    return None, "error:retry-exhausted"
 
 
 def _build_openai_prompt(plan: Dict[str, Any], audience: str) -> str:
@@ -411,6 +433,7 @@ def assess(payload: AssessInput) -> AssessOutput:
         baseline_json = json.dumps(baseline, ensure_ascii=False)
         llm_prompt = (
             "Return strict JSON only. You are improving a flood-risk payload.\n"
+            "Return compact JSON with only the requested keys.\n"
             "Output JSON with optional keys:\n"
             "- risk_score (int 0-100)\n"
             "- readiness_scores ({warning,logistics,vulnerable_care,comms,drills} int 0-100)\n"
@@ -708,6 +731,7 @@ def plan(payload: PlanInput) -> PlanOutput:
         }
         llm_prompt = (
             "Return strict JSON only for plan refinement.\n"
+            "Return compact JSON with only the requested keys.\n"
             "Output JSON with optional keys:\n"
             "- assessed_risk (int 0-100)\n"
             "- action_overrides (array of objects: index, priority?, horizon?, eta_minutes?)\n"
