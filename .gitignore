@@ -4,4 +4,9 @@ __pycache__/
 outputs/*.json
 outputs/*.md
 .DS_Store
-
+.env
+.env.openai
+.env.openai.*
+.env.local
+.env.openai.local
+.env.openai.dev
