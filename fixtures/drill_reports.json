@@ -1,0 +1,34 @@
+{
+  "singapore_coastal": {
+    "steps_completed": [
+      "Issue alert to residents",
+      "Verify evacuation routes",
+      "Check volunteer roster"
+    ],
+    "response_logs": [
+      {"time": "09:02", "event": "alert sent"}
+    ]
+  },
+  "bali_like": {
+    "steps_completed": [
+      "Issue alert to residents",
+      "Check volunteer roster",
+      "Record welfare check on vulnerable households"
+    ],
+    "response_logs": [
+      {"time": "15:11", "event": "evacuees logged"}
+    ]
+  },
+  "riverfront": {
+    "steps_completed": [
+      "Issue alert to residents",
+      "Verify evacuation routes",
+      "Check volunteer roster",
+      "Confirm shelter capacity",
+      "Record welfare check on vulnerable households"
+    ],
+    "response_logs": [
+      {"time": "07:15", "event": "route check"}
+    ]
+  }
+}

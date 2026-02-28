@@ -1,0 +1,6 @@
+{
+  "source": "river_authority",
+  "records": [
+    {"time": "2026-02-28T00:00:00Z", "rainfall_24h_mm": 210, "tide_level_m": 2.1, "river_level_m": 3.4, "alerts": ["Flash Flood Warning", "River Crest Alert"]}
+  ]
+}

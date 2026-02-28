@@ -1,0 +1,38 @@
+{
+  "name": "resilienceOS",
+  "version": "0.1.0",
+  "description": "AI resilience agent for neighborhood environmental crisis preparedness",
+  "runtime": "python",
+  "entrypoint": "resilienceos.cli:app",
+  "commands": [
+    {
+      "name": "assess",
+      "description": "Ingest forecast, infrastructure and population profile to produce risk and readiness scores."
+    },
+    {
+      "name": "plan",
+      "description": "Generate 24h/6h/1h action plans, task assignments, routes and materials checklist."
+    },
+    {
+      "name": "drill",
+      "description": "Evaluate drill compliance, missed steps, and produce a corrected template."
+    },
+    {
+      "name": "inbox",
+      "description": "Cluster social/media snippets and output escalation decisions."
+    },
+    {
+      "name": "explain",
+      "description": "Explain generated outputs in plain language with assumptions and evidence references."
+    },
+    {
+      "name": "simulate",
+      "description": "Predict neighborhood segment impact from hypothetical flood scenarios."
+    }
+  ],
+  "storage": {
+    "type": "json",
+    "default_dir": "fixtures"
+  },
+  "ui": "terminal"
+}

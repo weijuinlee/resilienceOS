@@ -1,0 +1,7 @@
+{
+  "source": "local_meteo",
+  "records": [
+    {"time": "2026-02-28T00:00:00Z", "rainfall_24h_mm": 190, "tide_level_m": 3.05, "river_level_m": 2.8, "alerts": ["Heavy Rain Watch", "Tidal Alert"]},
+    {"time": "2026-02-28T12:00:00Z", "rainfall_24h_mm": 205, "tide_level_m": 3.2, "river_level_m": 3.1, "alerts": ["Flash Flood Warning", "Coastal Flood Watch"]}
+  ]
+}

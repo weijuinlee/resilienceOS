@@ -1,0 +1,110 @@
+{
+  "scenario_id": "riverfront-lowland-v1",
+  "assess_input": {
+    "neighborhood_profile": {
+      "name": "Riverside Delta District",
+      "zones": [
+        {"name": "Lower Embankment", "households": 300, "vulnerable_population": 64, "elderly_ratio": 0.14, "has_elevated_walkway": true, "has_lift_access": true},
+        {"name": "Market Spine", "households": 210, "vulnerable_population": 50, "elderly_ratio": 0.16, "has_elevated_walkway": false, "has_lift_access": true}
+      ],
+      "floodproofing_notes": "Narrow drainage channels and one old electrical substation."
+    },
+    "hazard_window_hours": 12,
+    "forecast_summary": {
+      "forecast_window_hours": 12,
+      "rainfall_mm": 210,
+      "tide_level_m": 2.1,
+      "river_level_m": 3.4,
+      "wind_speed_kph": 8,
+      "alerts": ["Flash Flood Warning", "River Crest Alert", "Infrastructure Caution"],
+      "complaint_count": 14,
+      "map_snippets": ["delta_risk_map_1.png"]
+    },
+    "critical_infrastructure": [
+      {"name": "Market Ground Shelter", "type": "shelter", "status": "offline", "capacity": 120, "zone": "Market Spine", "supports_evacuation": true, "supports_vulnerable_care": true},
+      {"name": "Downtown Pump Cluster", "type": "drainage", "status": "degraded", "capacity": 95, "zone": "Lower Embankment", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Power Substation Alert", "type": "public_alert", "status": "degraded", "capacity": 800, "zone": "Market Spine", "supports_evacuation": false, "supports_vulnerable_care": false}
+    ],
+    "vulnerable_population_count": 114
+  },
+  "plan_input": {
+    "location": "Riverside Delta District",
+    "assessed_risk": 89,
+    "resources": {
+      "households": 510,
+      "volunteers": 14,
+      "coordinators": 2,
+      "transport_vehicles": 8,
+      "buses": 1,
+      "boats": 0,
+      "first_aid_teams": 1,
+      "generators": 0
+    },
+    "critical_infrastructure": [
+      {"name": "Market Ground Shelter", "type": "shelter", "status": "offline", "capacity": 120, "zone": "Market Spine", "supports_evacuation": true, "supports_vulnerable_care": true},
+      {"name": "Downtown Pump Cluster", "type": "drainage", "status": "degraded", "capacity": 95, "zone": "Lower Embankment", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Power Substation Alert", "type": "public_alert", "status": "degraded", "capacity": 800, "zone": "Market Spine", "supports_evacuation": false, "supports_vulnerable_care": false}
+    ],
+    "target_zones": ["Lower Embankment", "Market Spine"]
+  },
+  "drill_input": {
+    "last_drill_report": {
+      "steps_completed": ["Issue alert to residents", "Verify evacuation routes", "Check volunteer roster", "Confirm shelter capacity", "Record welfare check on vulnerable households"]
+    },
+    "response_logs": [
+      {"event": "route check", "time": "07:15"},
+      {"event": "shelter status", "time": "07:25"}
+    ],
+    "community_observations": []
+  },
+  "inbox_input": {
+    "social_media_snippets": [
+      {"text": "Rapid flooding at lower embankment; people in market plaza are waiting for rescue.", "media_links": ["flood1.mp4"], "severity_tag": "critical"},
+      {"text": "Power pole down near bus stop, avoid lane.", "media_links": ["pole.jpg"], "severity_tag": "high"}
+    ],
+    "severity_tags": ["critical", "high"]
+  },
+  "explain_input": {
+    "generated_plan": {
+      "risk_score": 89,
+      "time_horizon_plan": {
+        "24h": [{"what": "Deploy teams", "who": "ops_lead"}],
+        "6h": [{"what": "Evacuation briefing", "who": "coordination_team"}],
+        "1h": [{"what": "Close at-risk roads", "who": "traffic_unit"}]
+      },
+      "council_review": {
+        "final_rank": 91,
+        "perspectives": []
+      }
+    },
+    "audience": "response_manager"
+  },
+  "simulate_input": {
+    "scenario_name": "riverfront-rapid-rise",
+    "hazard_window_hours": 12,
+    "forecast_summary": {
+      "forecast_window_hours": 12,
+      "rainfall_mm": 224,
+      "tide_level_m": 2.1,
+      "river_level_m": 3.5,
+      "wind_speed_kph": 7,
+      "alerts": ["River crest", "Flash flood warning"],
+      "complaint_count": 16,
+      "map_snippets": ["riverfront_overlay.png"]
+    },
+    "neighborhood_segments": [
+      {"name": "Lower Embankment", "population": 770, "elevation_m": 0.6, "vulnerable_ratio": 0.21, "mobility_score": 0.2, "critical_facility_density": 0.15},
+      {"name": "Market Spine", "population": 620, "elevation_m": 1.0, "vulnerable_ratio": 0.24, "mobility_score": 0.3, "critical_facility_density": 0.17}
+    ],
+    "prepositioned_resources": {
+      "households": 510,
+      "volunteers": 14,
+      "coordinators": 2,
+      "transport_vehicles": 8,
+      "buses": 1,
+      "boats": 0,
+      "first_aid_teams": 1,
+      "generators": 0
+    }
+  }
+}

@@ -1,0 +1,85 @@
+# resilienceOS
+
+resilienceOS is a production-ready **Codex Skill plugin** for neighborhood flood preparedness.
+
+It is built for one-person, demo-ready deployments and runs locally first with deterministic outputs.
+
+## Problem
+Urban neighborhoods face frequent flood hazards but need to act before impact.
+This plugin turns forecast, infrastructure, and community signals into clear readiness scores,
+priority tasks, and field-ready plans.
+
+## Architecture
+
+```text
++------------------+      +------------------+
+|  Fixtures / APIs  | ---> |  Input Loader     | ---> +----------------+
+|  (local JSON)     |      |  (schema validate)|       |  Risk + Readiness|
++------------------+      +------------------+ ---> |  Engine          |
+                                              +-------+----------+
+                                                      |
+                                                      v
+                                            +----------------------+
+                                            |  Evaluation Module    |
+                                            | (urgency/feasibility/ |
+                                            | equity/efficiency)    |
+                                            +-----------+----------+
+                                                        |
+                                                        v
+                                            +----------------------+
+                                            |  Command handlers     |
+                                            | assess / plan / ...   |
+                                            +-----------+----------+
+                                                        |
+                                                        v
+                                            +----------------------+
+                                            |  CLI + Markdown/JSON |
+                                            +----------------------+
+```
+
+The CLI has six commands:
+- `assess`
+- `plan`
+- `drill`
+- `inbox`
+- `explain`
+- `simulate`
+
+Each output includes:
+- `version`
+- `generated_at`
+- `confidence`
+- `actionability`
+- evidence references and assumptions.
+
+## Optional API mode
+The current implementation is local-first and deterministic.
+Hook points for API sources are in `src/resilienceos/utils.py` (`load_input`) and can be replaced by live fetchers without changing command behavior.
+
+## Running
+
+```bash
+pip install -e .
+resilienceos assess --scenario singapore --format json
+resilienceos plan --scenario singapore --format markdown
+resilienceos drill --scenario singapore
+resilienceos inbox --scenario singapore
+resilienceos explain --scenario singapore
+resilienceos simulate --scenario singapore
+```
+
+### Sample one-command demo path
+
+```bash
+resilienceos assess --scenario singapore --output outputs/assess_singapore.json
+resilienceos plan --scenario singapore --output outputs/plan_singapore.json
+resilienceos simulate --scenario singapore --output outputs/simulate_singapore.json
+```
+
+A full run typically finishes well under 60 seconds for small fixture payloads.
+
+## Local files
+- `src/resilienceos/` command handlers, models, and scoring logic
+- `fixtures/` dry-run scenarios and data
+- `outputs/` generated example outputs
+

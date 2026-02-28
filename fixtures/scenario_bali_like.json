@@ -1,0 +1,115 @@
+{
+  "scenario_id": "bali-like-hybrid-v1",
+  "assess_input": {
+    "neighborhood_profile": {
+      "name": "Lalang Beach Housing",
+      "zones": [
+        {"name": "North Court", "households": 260, "vulnerable_population": 58, "elderly_ratio": 0.12, "has_elevated_walkway": false, "has_lift_access": false},
+        {"name": "Temple Row", "households": 190, "vulnerable_population": 36, "elderly_ratio": 0.20, "has_elevated_walkway": false, "has_lift_access": true}
+      ],
+      "floodproofing_notes": "Beach-adjacent drain covers are known weak points."
+    },
+    "hazard_window_hours": 18,
+    "forecast_summary": {
+      "forecast_window_hours": 18,
+      "rainfall_mm": 130,
+      "tide_level_m": 2.8,
+      "river_level_m": 1.9,
+      "wind_speed_kph": 12,
+      "alerts": ["Local Drainage Advisory"],
+      "complaint_count": 6,
+      "map_snippets": ["bali_map_1.png"]
+    },
+    "critical_infrastructure": [
+      {"name": "Bali Community Shelter", "type": "shelter", "status": "operational", "capacity": 180, "zone": "North Court", "supports_evacuation": true, "supports_vulnerable_care": true},
+      {"name": "Main Pump Yard", "type": "drainage", "status": "operational", "capacity": 70, "zone": "Temple Row", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Tourist Hub Siren", "type": "siren", "status": "operational", "capacity": 1, "zone": "Temple Row", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Temporary Evacuation Route", "type": "evacuation_route", "status": "degraded", "capacity": 150, "zone": "North Court", "supports_evacuation": true, "supports_vulnerable_care": false}
+    ],
+    "vulnerable_population_count": 94
+  },
+  "plan_input": {
+    "location": "Lalang Beach Housing",
+    "assessed_risk": 61,
+    "resources": {
+      "households": 450,
+      "volunteers": 12,
+      "coordinators": 3,
+      "transport_vehicles": 4,
+      "buses": 1,
+      "boats": 0,
+      "first_aid_teams": 1,
+      "generators": 1
+    },
+    "critical_infrastructure": [
+      {"name": "Bali Community Shelter", "type": "shelter", "status": "operational", "capacity": 180, "zone": "North Court", "supports_evacuation": true, "supports_vulnerable_care": true},
+      {"name": "Main Pump Yard", "type": "drainage", "status": "operational", "capacity": 70, "zone": "Temple Row", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Tourist Hub Siren", "type": "siren", "status": "operational", "capacity": 1, "zone": "Temple Row", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Temporary Evacuation Route", "type": "evacuation_route", "status": "degraded", "capacity": 150, "zone": "North Court", "supports_evacuation": true, "supports_vulnerable_care": false}
+    ],
+    "target_zones": ["North Court", "Temple Row"]
+  },
+  "drill_input": {
+    "last_drill_report": {
+      "steps_completed": ["Issue alert to residents", "Check volunteer roster", "Record welfare check on vulnerable households"],
+      "observed_steps": ["confirm shelter capacity"]
+    },
+    "response_logs": [
+      {"event": "evacuees logged", "time": "15:11"}
+    ],
+    "community_observations": [
+      "Need signage in English and Bahasa for visitors"
+    ]
+  },
+  "inbox_input": {
+    "social_media_snippets": [
+      {"text": "Water reached footpath near temple and blocked one road lane", "media_links": ["photo.jpg"], "severity_tag": "medium"},
+      {"text": "Need pump assistance near sea wall", "media_links": [], "severity_tag": "medium"},
+      {"text": "Child and elderly rescue requested after basement flood", "media_links": ["vid.mov"], "severity_tag": "urgent"}
+    ],
+    "severity_tags": ["medium", "urgent", "low"]
+  },
+  "explain_input": {
+    "generated_plan": {
+      "risk_score": 61,
+      "time_horizon_plan": {
+        "24h": [{"what": "Validate weather", "who": "ops_lead"}],
+        "6h": [{"what": "Message residents", "who": "comm_hub"}],
+        "1h": [{"what": "Prepare shelters", "who": "coordination_team"}]
+      },
+      "council_review": {
+        "final_rank": 74,
+        "perspectives": []
+      }
+    },
+    "audience": "public_official"
+  },
+  "simulate_input": {
+    "scenario_name": "bali-tourist-bridge",
+    "hazard_window_hours": 18,
+    "forecast_summary": {
+      "forecast_window_hours": 18,
+      "rainfall_mm": 145,
+      "tide_level_m": 2.8,
+      "river_level_m": 1.9,
+      "wind_speed_kph": 10,
+      "alerts": ["Drainage Advisory"],
+      "complaint_count": 8,
+      "map_snippets": ["bali_overlay.png"]
+    },
+    "neighborhood_segments": [
+      {"name": "North Court", "population": 640, "elevation_m": 1.0, "vulnerable_ratio": 0.2, "mobility_score": 0.4, "critical_facility_density": 0.31},
+      {"name": "Temple Row", "population": 470, "elevation_m": 1.3, "vulnerable_ratio": 0.12, "mobility_score": 0.55, "critical_facility_density": 0.20}
+    ],
+    "prepositioned_resources": {
+      "households": 450,
+      "volunteers": 12,
+      "coordinators": 3,
+      "transport_vehicles": 4,
+      "buses": 1,
+      "boats": 0,
+      "first_aid_teams": 1,
+      "generators": 1
+    }
+  }
+}

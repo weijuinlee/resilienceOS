@@ -1,0 +1,127 @@
+{
+  "scenario_id": "singapore-coastal-v1",
+  "assess_input": {
+    "neighborhood_profile": {
+      "name": "Pulau Brani Waterfront",
+      "zones": [
+        {"name": "Jetty Edge", "households": 180, "vulnerable_population": 42, "elderly_ratio": 0.18, "has_elevated_walkway": true, "has_lift_access": true},
+        {"name": "Canal View", "households": 230, "vulnerable_population": 60, "elderly_ratio": 0.22, "has_elevated_walkway": false, "has_lift_access": false},
+        {"name": "Old Dock", "households": 140, "vulnerable_population": 32, "elderly_ratio": 0.30, "has_elevated_walkway": false, "has_lift_access": true}
+      ],
+      "floodproofing_notes": "Underground parking areas have no active pumps after 8pm."
+    },
+    "hazard_window_hours": 24,
+    "forecast_summary": {
+      "forecast_window_hours": 24,
+      "rainfall_mm": 190,
+      "tide_level_m": 3.05,
+      "river_level_m": 2.8,
+      "wind_speed_kph": 14,
+      "alerts": ["Heavy Rain Watch", "Tidal Alert", "Drainage advisory"],
+      "complaint_count": 9,
+      "map_snippets": ["water_log_map_sg_1.png", "tide_overlay_sg_1.png"]
+    },
+    "critical_infrastructure": [
+      {"name": "Pulau Brani Community Hall", "type": "shelter", "status": "operational", "capacity": 220, "zone": "Jetty Edge", "supports_evacuation": true, "supports_vulnerable_care": true},
+      {"name": "Canal Pump Station North", "type": "drainage", "status": "degraded", "capacity": 85, "zone": "Canal View", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Harbour Siren Unit", "type": "siren", "status": "operational", "capacity": 1, "zone": "Old Dock", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Barangay Radio Node", "type": "public_alert", "status": "operational", "capacity": 1500, "zone": "Jetty Edge", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Marina Bridge Evacuation Route", "type": "evacuation_route", "status": "operational", "capacity": 300, "zone": "Canal View", "supports_evacuation": true, "supports_vulnerable_care": false}
+    ],
+    "vulnerable_population_count": 134
+  },
+  "plan_input": {
+    "location": "Pulau Brani Waterfront",
+    "assessed_risk": 82,
+    "resources": {
+      "households": 550,
+      "volunteers": 18,
+      "coordinators": 4,
+      "transport_vehicles": 6,
+      "buses": 2,
+      "boats": 1,
+      "first_aid_teams": 2,
+      "generators": 1
+    },
+    "critical_infrastructure": [
+      {"name": "Pulau Brani Community Hall", "type": "shelter", "status": "operational", "capacity": 220, "zone": "Jetty Edge", "supports_evacuation": true, "supports_vulnerable_care": true},
+      {"name": "Canal Pump Station North", "type": "drainage", "status": "degraded", "capacity": 85, "zone": "Canal View", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Harbour Siren Unit", "type": "siren", "status": "operational", "capacity": 1, "zone": "Old Dock", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Barangay Radio Node", "type": "public_alert", "status": "operational", "capacity": 1500, "zone": "Jetty Edge", "supports_evacuation": false, "supports_vulnerable_care": false},
+      {"name": "Marina Bridge Evacuation Route", "type": "evacuation_route", "status": "operational", "capacity": 300, "zone": "Canal View", "supports_evacuation": true, "supports_vulnerable_care": false}
+    ],
+    "target_zones": ["Jetty Edge", "Canal View", "Old Dock"]
+  },
+  "drill_input": {
+    "last_drill_report": {
+      "steps_completed": [
+        "Issue alert to residents",
+        "Verify evacuation routes",
+        "Check volunteer roster"
+      ],
+      "observed_steps": ["confirm shelter capacity"]
+    },
+    "response_logs": [
+      {"event": "alert sent", "time": "09:02"},
+      {"event": "transport check", "time": "09:10"}
+    ],
+    "community_observations": [
+      "Residents asked for clearer Malay translation in SMS.",
+      "Wheelchair access not covered in one route"
+    ]
+  },
+  "inbox_input": {
+    "social_media_snippets": [
+      {"text": "Drainage at Marina Bridge blocked after tide came in, water is rising near ground floors.", "media_links": ["clip001.mp4"], "severity_tag": "high"},
+      {"text": "Power in Canal View went out, but people still in place. Please confirm evacuation point.", "media_links": [], "severity_tag": "medium"},
+      {"text": "Stranded family on ground floor asks rescue near pump station", "media_links": ["img1.jpg", "img2.jpg"], "severity_tag": "urgent"},
+      {"text": "Shelter has space but signage is not visible to elderly residents", "media_links": [], "severity_tag": "medium"}
+    ],
+    "severity_tags": ["high", "medium", "critical", "low"]
+  },
+  "explain_input": {
+    "generated_plan": {
+      "risk_score": 82,
+      "assessed_risk": 82,
+      "time_horizon_plan": {
+        "24h": [{"what": "Validate weather", "who": "ops_lead"}],
+        "6h": [{"what": "Text residents", "who": "comm_hub"}],
+        "1h": [{"what": "Prepare evacuation", "who": "coordination_team"}]
+      },
+      "council_review": {
+        "final_rank": 87,
+        "perspectives": []
+      }
+    },
+    "audience": "public_official"
+  },
+  "simulate_input": {
+    "scenario_name": "hypo-sg-coastal-72h",
+    "hazard_window_hours": 24,
+    "forecast_summary": {
+      "forecast_window_hours": 24,
+      "rainfall_mm": 205,
+      "tide_level_m": 3.2,
+      "river_level_m": 3.1,
+      "wind_speed_kph": 16,
+      "alerts": ["Flash Flood Warning", "Coastal Flood Watch"],
+      "complaint_count": 11,
+      "map_snippets": ["scenario_overlay.png"]
+    },
+    "neighborhood_segments": [
+      {"name": "Jetty Edge", "population": 520, "elevation_m": 1.2, "vulnerable_ratio": 0.23, "mobility_score": 0.32, "critical_facility_density": 0.42},
+      {"name": "Canal View", "population": 740, "elevation_m": 0.9, "vulnerable_ratio": 0.33, "mobility_score": 0.28, "critical_facility_density": 0.35},
+      {"name": "Old Dock", "population": 380, "elevation_m": 1.8, "vulnerable_ratio": 0.18, "mobility_score": 0.50, "critical_facility_density": 0.20}
+    ],
+    "prepositioned_resources": {
+      "households": 550,
+      "volunteers": 18,
+      "coordinators": 4,
+      "transport_vehicles": 6,
+      "buses": 2,
+      "boats": 1,
+      "first_aid_teams": 2,
+      "generators": 1
+    }
+  }
+}

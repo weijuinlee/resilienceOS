@@ -1,0 +1,7 @@
+{
+  "source": "local_weather",
+  "records": [
+    {"time": "2026-02-28T00:00:00Z", "rainfall_24h_mm": 130, "tide_level_m": 2.8, "river_level_m": 1.9, "alerts": ["Local Drainage Advisory"]},
+    {"time": "2026-02-28T12:00:00Z", "rainfall_24h_mm": 145, "tide_level_m": 2.8, "river_level_m": 1.9, "alerts": ["Drainage Advisory"]}
+  ]
+}
