@@ -108,6 +108,11 @@ Or run the exact same flow via Makefile:
 ```bash
 make smoke-fast
 ```
+For a complete validation bundle that includes positive paths plus the expected invalid-format failure, use:
+
+```bash
+make smoke-skill
+```
 
 Output notes for judges:
 - `assess` returns a machine-readable readiness/risk payload.
@@ -162,6 +167,7 @@ Use `make` for repeatable checks:
 make install              # creates .venv and installs editable
 make smoke                # JSON smoke checks via direct PYTHONPATH fallback
 make smoke-fast           # 2-minute judge-friendly demo with expected validation failure
+make smoke-skill          # deterministic full skill smoke path using skill helper script
 make smoke-installed      # JSON smoke checks via installed CLI (if install succeeds)
 make smoke-fail           # expected validation-failure path for invalid format
 make codex-link           # register this repo in ~/.codex/skills

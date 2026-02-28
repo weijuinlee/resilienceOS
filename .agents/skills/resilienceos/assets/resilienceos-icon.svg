@@ -1,0 +1,8 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title>ResilienceOS</title>
+  <desc>Shield with wave icon for resilience workflows</desc>
+  <rect width="128" height="128" rx="22" fill="#0F766E"/>
+  <path d="M64 18l42 20v27.3c0 24.2-19.3 46.6-42 50.9C43.9 92.3 24 69.5 24 46.3V38z" fill="#ECFEFF"/>
+  <path d="M64 24.5l34 16.2v22.4c0 19.8-15.7 38.2-34 42-18.3-3.8-34-22.2-34-42V40.7z" fill="#22C55E"/>
+  <path d="M45 62l13 11 25-28" fill="none" stroke="#0F172A" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -5,7 +5,7 @@ VENV ?= .venv
 VENV_BIN := $(VENV)/bin
 SCENARIO ?= singapore
 
-.PHONY: help install install-offline smoke smoke-direct smoke-installed smoke-fast smoke-agent smoke-fail smoke-input install-link codex-link clean
+.PHONY: help install install-offline smoke smoke-direct smoke-installed smoke-fast smoke-agent smoke-fail smoke-input smoke-skill codex-link clean
 
 help:
 	@echo "Targets:"
@@ -13,6 +13,7 @@ help:
 	@echo "  install-offline - create .venv with system-site-packages and install in editable mode (no dependency downloads)"
 	@echo "  smoke          - run JSON smoke checks via direct PYTHONPATH fallback"
 	@echo "  smoke-installed - run smoke checks via installed resilienceos CLI (if available)"
+	@echo "  smoke-skill    - run deterministic skill smoke checks using the skill helper script"
 	@echo "  smoke-fast     - run the 2-minute hackathon demo flow with expected failure path"
 	@echo "  smoke-agent    - run assess/plan/agent bundle smoke checks"
 	@echo "  smoke-fail     - run invalid format failure path (expected)"
@@ -54,6 +55,9 @@ smoke-fast:
 	$(VENV_BIN)/resilienceos agent --scenario $(SCENARIO) --include-inbox --include-simulate --format json | jq '.scenario, .immediate_actions, .watchlist'
 	$(VENV_BIN)/resilienceos explain --scenario $(SCENARIO) --format json | jq '.plain_language_rationale'
 	$(VENV_BIN)/resilienceos assess --format xml || true
+
+smoke-skill:
+	bash .agents/skills/resilienceos/scripts/resilienceos-smoke-checks.sh
 
 smoke-agent: smoke-direct
 
