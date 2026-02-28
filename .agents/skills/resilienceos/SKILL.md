@@ -56,6 +56,8 @@ Use this skill when the task is about:
 - Concise human-readable judge summary is available via `--format concise_brief`.
 - `--format xml` must fail cleanly with `Invalid value: format must ...`.
 - Healthcheck writes a timestamped log file under `outputs/`.
+- User-supplied credentials rule:
+  - This skill does not ship provider keys. Operators should configure their own OpenAI key in local environment before running LLM-assisted explain paths.
 
 ## Verification Notes
 - Confirm exit codes and include command output snippets on failures.
@@ -64,6 +66,10 @@ Use this skill when the task is about:
   - exact command
   - shell, venv state
   - healthcheck log path
+- Optional LLM power path:
+  - Set `OPENAI_API_KEY` (or `RESILIENCEOS_OPENAI_API_KEY`) before running `explain`-facing flows.
+  - Use `resilienceos explain --scenario singapore --format concise_brief` to validate LLM output.
+  - Set `RESILIENCEOS_DISABLE_OPENAI_EXPLAIN=true` to force deterministic-only responses.
 
 ## Failure Triage
 - Install fails with permission errors:

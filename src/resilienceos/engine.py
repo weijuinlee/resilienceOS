@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import urllib.error
+import urllib.request
 from typing import Any, Dict, List
 
 from .evaluation import build_council_review, score_recommendation
@@ -56,6 +59,142 @@ def _merge_evidence(*items: Any) -> List[str]:
         else:
             refs.append(str(item))
     return refs[:6]
+
+
+def _openai_api_key() -> str | None:
+    for key in ("OPENAI_API_KEY", "RESILIENCEOS_OPENAI_API_KEY", "RESILIENCE_OS_OPENAI_API_KEY"):
+        value = os.getenv(key, "")
+        if value:
+            return value
+    return None
+
+
+def _safe_float_env(value: str | None, default: float) -> float:
+    try:
+        return float(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+def _safe_int_env(value: str | None, default: int) -> int:
+    try:
+        return int(value) if value is not None else default
+    except (TypeError, ValueError):
+        return default
+
+
+def _openai_config() -> Dict[str, Any]:
+    return {
+        "base_url": os.getenv("RESILIENCEOS_OPENAI_BASE_URL", "https://api.openai.com/v1"),
+        "model": os.getenv("RESILIENCEOS_OPENAI_MODEL", "gpt-4o-mini"),
+        "temperature": _safe_float_env(os.getenv("RESILIENCEOS_OPENAI_TEMPERATURE"), 0.2),
+        "max_tokens": _safe_int_env(os.getenv("RESILIENCEOS_OPENAI_MAX_TOKENS"), 220),
+        "timeout": _safe_float_env(os.getenv("RESILIENCEOS_OPENAI_TIMEOUT_SECONDS"), 20),
+    }
+
+
+def _llm_disabled() -> bool:
+    value = os.getenv("RESILIENCEOS_DISABLE_OPENAI_EXPLAIN", "0").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def _extract_plan_snippet(plan: Dict[str, Any]) -> Dict[str, Any]:
+    snippet = {
+        "evidence_references": plan.get("evidence_references", []),
+        "assumptions": plan.get("assumptions", []),
+        "missing_data": plan.get("missing_data", []),
+        "actionability": {
+            "estimated_minutes_to_act": plan.get("actionability", {}).get("estimated_minutes_to_act"),
+            "recommended_owner": plan.get("actionability", {}).get("recommended_owner"),
+        },
+    }
+
+    if "risk_score" in plan:
+        snippet["risk_score"] = plan.get("risk_score")
+    if "assessed_risk" in plan:
+        snippet["assessed_risk"] = plan.get("assessed_risk")
+    if "readiness_scores" in plan:
+        snippet["readiness_scores"] = plan.get("readiness_scores")
+    if "readiness_gap" in plan:
+        snippet["readiness_gap"] = plan.get("readiness_gap")
+
+    if "immediate_actions" in plan:
+        snippet["immediate_actions"] = plan.get("immediate_actions", [])[:6]
+    if "watchlist" in plan:
+        snippet["watchlist"] = plan.get("watchlist", [])[:3]
+
+    if "time_horizon_plan" in plan and isinstance(plan.get("time_horizon_plan"), dict):
+        snippet["time_horizon_plan"] = {
+            horizon: actions[:2]
+            for horizon, actions in plan["time_horizon_plan"].items()
+            if isinstance(actions, list)
+        }
+
+    if "council_review" in plan:
+        snippet["council_review"] = plan.get("council_review")
+    return snippet
+
+
+def _build_openai_prompt(plan: Dict[str, Any], audience: str) -> str:
+    snippet = _extract_plan_snippet(plan)
+    return (
+        "You are a municipal emergency operations analyst."
+        " Explain the following resilience payload for this audience in one short paragraph plus up to"
+        f" 3 concise bullets, with explicit priority logic and urgency reasoning.\n\n"
+        f"Audience: {audience}\n"
+        f"Payload (JSON):\n{json.dumps(snippet, indent=2, ensure_ascii=False)}\n\n"
+        "Constraints:\n"
+        "- Keep each bullet short and evidence-based.\n"
+        "- Mention why action urgency changes by priority/ETA when visible.\n"
+        "- Include the strongest tradeoff across urgency, feasibility, and care for vulnerable households.\n"
+    )
+
+
+def _call_openai_for_explain(payload: Dict[str, Any], audience: str) -> tuple[str | None, str]:
+    api_key = _openai_api_key()
+    if not api_key:
+        return None, "no-api-key"
+
+    config = _openai_config()
+    base = config["base_url"].rstrip("/")
+    endpoint = f"{base}/chat/completions"
+    request_body = {
+        "model": config["model"],
+        "messages": [
+            {"role": "system", "content": "You summarize emergency priorities for neighborhood resilience teams."},
+            {"role": "user", "content": _build_openai_prompt(payload, audience)},
+        ],
+        "temperature": config["temperature"],
+        "max_tokens": config["max_tokens"],
+    }
+
+    request = urllib.request.Request(
+        endpoint,
+        data=json.dumps(request_body).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=config["timeout"]) as response:
+            response_data = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as error:
+        return None, f"error:{error!r}"
+
+    choices = response_data.get("choices") if isinstance(response_data, dict) else None
+    if not isinstance(choices, list) or not choices:
+        return None, "error:invalid-response"
+
+    message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
+    content = message.get("content") if isinstance(message, dict) else None
+    if not isinstance(content, str) or not content.strip():
+        return None, "error:empty-content"
+
+    return content.strip(), str(config["model"])
 
 
 def assess(payload: AssessInput) -> AssessOutput:
@@ -519,14 +658,27 @@ def explain(payload: ExplainInput) -> ExplainOutput:
     if "evidence_references" not in plan:
         missing.append("source references")
 
-    rationale = [
+    fallback = [
         "Priorities are ordered as 24h, 6h, and 1h checkpoints to support pre-impact sequencing.",
         "Actions were generated by deterministic rules from risk, readiness, and resource assumptions.",
     ]
     if "risk_score" in plan:
-        rationale.append(f"Risk score {plan.get('risk_score')} shifts the urgency tiering in the selected plan.")
+        fallback.append(f"Risk score {plan.get('risk_score')} shifts the urgency tiering in the selected plan.")
     if "council_review" in plan:
-        rationale.append("Council review score is included so leads can compare planner, operations, and safety perspectives.")
+        fallback.append("Council review score is included so leads can compare planner, operations, and safety perspectives.")
+
+    rationale = fallback
+    if not _llm_disabled() and isinstance(plan, dict):
+        if _openai_api_key():
+            generated, model = _call_openai_for_explain(payload.generated_plan, payload.audience)
+            if generated:
+                rationale = [generated]
+                assumptions.append(f"LLM rationale generated by {model}.")
+            else:
+                assumptions.append("OpenAI explain request failed; using deterministic fallback.")
+                missing.append(f"LLM explain unavailable: {model}")
+        else:
+            assumptions.append("OpenAI API key missing; using deterministic fallback explanation.")
 
     return ExplainOutput(
         plain_language_rationale=" ".join(rationale),
