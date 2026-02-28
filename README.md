@@ -114,6 +114,61 @@ For a complete validation bundle that includes positive paths plus the expected 
 make smoke-skill
 ```
 
+## Visual dashboard (Streamlit)
+
+Run a demo-friendly dashboard to call resilienceOS from a browser:
+
+```bash
+make ui
+```
+
+The dashboard lets you:
+- switch between `assess`, `plan`, `agent`, `drill`, `inbox`, `simulate`, and `explain`
+- run scenarios from built-in fixtures or a local JSON file
+- pass plan/agent risk overrides and optional inbox/simulate modules
+- inspect rendered summaries and raw JSON payloads instantly
+
+If `streamlit` is not already in your venv, `make ui` installs it first.
+
+### Judge-ready one-click demo
+
+Use a preloaded demo URL and auto-run to reduce clicks:
+
+```bash
+DEMO_COMMAND=agent DEMO_SCENARIO=singapore make demo-ui
+```
+
+This opens `resilienceOS` with:
+- preselected module/scenario
+- optional assessed-risk override
+- auto-run enabled
+
+For a repeatable screenshot capture:
+
+```bash
+DEMO_COMMAND=agent DEMO_SCENARIO=singapore DEMO_SCREENSHOT=outputs/demo-dashboard.png make demo-shot
+```
+
+If Playwright is not installed, the target prints a fallback instruction and the local screenshot workflow.
+
+### Fully pre-baked judge mode
+
+Run the judge preset with no inline variables:
+
+```bash
+make demo-local
+```
+
+If port 8501 is already busy, the demo script automatically falls back to the next free local port and prints the URL it opens.
+
+If you want an automatic screenshot from the same preset:
+
+```bash
+make demo-local-shot
+```
+
+Preset file: `scripts/demo-presets/judge.env`
+
 Output notes for judges:
 - `assess` returns a machine-readable readiness/risk payload.
 - `plan` returns a priority action plan by horizon.

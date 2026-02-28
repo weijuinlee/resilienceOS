@@ -4,8 +4,16 @@ PYTHON ?= python3
 VENV ?= .venv
 VENV_BIN := $(VENV)/bin
 SCENARIO ?= singapore
+DEMO_COMMAND ?= agent
+DEMO_SCENARIO ?= singapore
+DEMO_INCLUDE_INBOX ?= true
+DEMO_INCLUDE_SIMULATE ?= true
+DEMO_ASSESSED_RISK ?= 90
+DEMO_SCREENSHOT ?= outputs/resilienceos-dashboard-demo.png
+DEMO_PORT ?= 8501
+DEMO_PRESET ?= scripts/demo-presets/judge.env
 
-.PHONY: help install install-offline smoke smoke-direct smoke-installed smoke-fast smoke-agent smoke-fail smoke-input smoke-skill codex-link clean
+.PHONY: help install install-offline smoke smoke-direct smoke-installed smoke-fast smoke-agent smoke-fail smoke-input smoke-skill ui demo-ui demo-shot demo-local demo-local-shot codex-link clean
 
 help:
 	@echo "Targets:"
@@ -18,6 +26,11 @@ help:
 	@echo "  smoke-agent    - run assess/plan/agent bundle smoke checks"
 	@echo "  smoke-fail     - run invalid format failure path (expected)"
 	@echo "  smoke-input    - run fixture file smoke check"
+	@echo "  ui             - launch Streamlit dashboard (installs streamlit if missing in venv)"
+	@echo "  demo-ui        - launch one-click Streamlit judge demo with preloaded command/scenario"
+	@echo "  demo-local     - one-click judge preset demo (no env vars needed)"
+	@echo "  demo-local-shot - one-click judge preset screenshot capture (requires Playwright)"
+	@echo "  demo-shot      - run one-click demo and capture screenshot (requires Playwright)"
 	@echo "  codex-link     - link repo as ~/.codex/skills/resilienceOS"
 	@echo "  clean          - remove .venv"
 
@@ -58,6 +71,58 @@ smoke-fast:
 
 smoke-skill:
 	bash .agents/skills/resilienceos/scripts/resilienceos-smoke-checks.sh
+
+ui:
+	@if [ ! -x "$(VENV_BIN)/streamlit" ]; then \
+		echo "Installing Streamlit into .venv"; \
+		$(VENV_BIN)/python -m pip install streamlit; \
+	fi
+	$(VENV_BIN)/streamlit run frontend/app.py
+
+demo-ui:
+	DEMO_COMMAND=$(DEMO_COMMAND) \
+	DEMO_SCENARIO=$(DEMO_SCENARIO) \
+	DEMO_INCLUDE_INBOX=$(DEMO_INCLUDE_INBOX) \
+	DEMO_INCLUDE_SIMULATE=$(DEMO_INCLUDE_SIMULATE) \
+	DEMO_ASSESSED_RISK=$(DEMO_ASSESSED_RISK) \
+	DEMO_PORT=$(DEMO_PORT) \
+	VENV_BIN=$(VENV_BIN) \
+	bash scripts/resilienceos-demo-ui.sh
+
+demo-shot:
+	DEMO_COMMAND=$(DEMO_COMMAND) \
+	DEMO_SCENARIO=$(DEMO_SCENARIO) \
+	DEMO_INCLUDE_INBOX=$(DEMO_INCLUDE_INBOX) \
+	DEMO_INCLUDE_SIMULATE=$(DEMO_INCLUDE_SIMULATE) \
+	DEMO_ASSESSED_RISK=$(DEMO_ASSESSED_RISK) \
+	DEMO_PORT=$(DEMO_PORT) \
+	DEMO_SCREENSHOT=$(DEMO_SCREENSHOT) \
+	VENV_BIN=$(VENV_BIN) \
+	bash scripts/resilienceos-demo-shot.sh
+
+demo-local:
+	@set -a; \
+	if [ -f "$(DEMO_PRESET)" ]; then \
+		. "$(DEMO_PRESET)"; \
+	else \
+		echo "Missing preset file: $(DEMO_PRESET)"; \
+		exit 1; \
+	fi; \
+	set +a; \
+	VENV_BIN=$(VENV_BIN) \
+	bash scripts/resilienceos-demo-ui.sh
+
+demo-local-shot:
+	@set -a; \
+	if [ -f "$(DEMO_PRESET)" ]; then \
+		. "$(DEMO_PRESET)"; \
+	else \
+		echo "Missing preset file: $(DEMO_PRESET)"; \
+		exit 1; \
+	fi; \
+	set +a; \
+	VENV_BIN=$(VENV_BIN) \
+	bash scripts/resilienceos-demo-shot.sh
 
 smoke-agent: smoke-direct
 
