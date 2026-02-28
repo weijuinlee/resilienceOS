@@ -73,6 +73,13 @@ export RESILIENCEOS_OPENAI_MODEL="gpt-4o-mini"   # optional
 export RESILIENCEOS_OPENAI_MAX_TOKENS="260"       # optional
 ```
 
+Quick local setup:
+
+```bash
+cp openai.env.example .env.openai
+# then set your real key in .env.openai
+```
+
 When configured, `explain` outputs (and anything that auto-generates `plain_language_rationale`, such as `--format concise_brief` and the Streamlit "Concise brief" panel) will use LLM-powered explanation text when available.
 
 Fallback behavior:
