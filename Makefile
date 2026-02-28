@@ -13,7 +13,7 @@ DEMO_SCREENSHOT ?= outputs/resilienceos-dashboard-demo.png
 DEMO_PORT ?= 8501
 DEMO_PRESET ?= scripts/demo-presets/judge.env
 
-.PHONY: help install install-offline smoke smoke-direct smoke-installed smoke-fast smoke-agent smoke-fail smoke-input smoke-skill ui demo-ui demo-shot demo-local demo-local-judge demo-local-highrisk demo-local-shot demo-shot-highrisk codex-link clean
+.PHONY: help install install-offline smoke smoke-direct smoke-installed smoke-fast smoke-agent smoke-fail smoke-input smoke-skill skill-health ui demo-ui demo-shot demo-local demo-local-judge demo-local-highrisk demo-local-shot demo-shot-highrisk codex-link clean
 
 help:
 	@echo "Targets:"
@@ -22,6 +22,7 @@ help:
 	@echo "  smoke          - run JSON smoke checks via direct PYTHONPATH fallback"
 	@echo "  smoke-installed - run smoke checks via installed resilienceos CLI (if available)"
 	@echo "  smoke-skill    - run deterministic skill smoke checks using the skill helper script"
+	@echo "  skill-health   - run the Codex skill healthcheck with structured pass/fail output"
 	@echo "  smoke-fast     - run the 2-minute hackathon demo flow with expected failure path"
 	@echo "  smoke-agent    - run assess/plan/agent bundle smoke checks"
 	@echo "  smoke-fail     - run invalid format failure path (expected)"
@@ -74,6 +75,9 @@ smoke-fast:
 
 smoke-skill:
 	bash .agents/skills/resilienceos/scripts/resilienceos-smoke-checks.sh
+
+skill-health:
+	bash .agents/skills/resilienceos/scripts/resilienceos-healthcheck.sh
 
 ui:
 	@if [ ! -x "$(VENV_BIN)/streamlit" ]; then \

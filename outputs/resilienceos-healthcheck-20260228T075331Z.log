@@ -1,0 +1,964 @@
+
+==== Healthcheck report ====
+Repo root: /Users/weijuin/Documents/resilienceOS
+Log file: /Users/weijuin/Documents/resilienceOS/outputs/resilienceos-healthcheck-20260228T075331Z.log
+.venv detected.
+PASS: python3 found
+PASS: jq found
+Using CLI: /Users/weijuin/Documents/resilienceOS/.venv/bin/resilienceos
+
+==== Expected positive paths ====
+
+==== assess JSON ====
+{
+  "plugin_version": "0.1.0",
+  "generated_at": "2026-02-28T07:53:31Z",
+  "confidence": 0.8649999999999999,
+  "evidence_references": [
+    "Pulau Brani Waterfront",
+    "['Heavy Rain Watch', 'Tidal Alert', 'Drainage advisory']",
+    "[CriticalInfrastructure(name='Pulau Brani Community Hall', type='shelter', status='operational', capacity=220, zone='Jetty Edge', supports_evacuation=True, supports_vulnerable_care=True), CriticalInfrastructure(name='Canal Pump Station North', type='drainage', status='degraded', capacity=85, zone='Canal View', supports_evacuation=False, supports_vulnerable_care=False), CriticalInfrastructure(name='Harbour Siren Unit', type='siren', status='operational', capacity=1, zone='Old Dock', supports_evacuation=False, supports_vulnerable_care=False), CriticalInfrastructure(name='Barangay Radio Node', type='public_alert', status='operational', capacity=1500, zone='Jetty Edge', supports_evacuation=False, supports_vulnerable_care=False), CriticalInfrastructure(name='Marina Bridge Evacuation Route', type='evacuation_route', status='operational', capacity=300, zone='Canal View', supports_evacuation=True, supports_vulnerable_care=False)]"
+  ],
+  "actionability": {
+    "can_run_offline": true,
+    "estimated_minutes_to_act": 15,
+    "assumptions": [],
+    "missing_data": [],
+    "recommended_owner": "neighborhood_ops_cell"
+  },
+  "risk_score": 61,
+  "top_hazard_triggers": [
+    {
+      "name": "Alert Pressure",
+      "score": 1.0,
+      "reason": "3 active alerts in merged feeds."
+    },
+    {
+      "name": "Tidal",
+      "score": 0.8714285714285713,
+      "reason": "Current tide level 3.05m indicates potential backflow."
+    },
+    {
+      "name": "River",
+      "score": 0.7999999999999999,
+      "reason": "River gauge 2.8m near drainage limits."
+    },
+    {
+      "name": "Rainfall",
+      "score": 0.7307692307692307,
+      "reason": "24h rainfall forecast 190.0 mm over 24h."
+    },
+    {
+      "name": "Vulnerable Density",
+      "score": 0.4921946740128559,
+      "reason": "vulnerable population ratio 134/1815 (~7%)."
+    }
+  ],
+  "readiness_scores": {
+    "warning": 79,
+    "logistics": 100,
+    "vulnerable_care": 68,
+    "comms": 100,
+    "drills": 55
+  },
+  "readiness_gap": "vulnerable_care",
+  "assumptions": [],
+  "council_review": {
+    "final_rank": 73,
+    "perspectives": [
+      {
+        "perspective": "planner",
+        "score": 0.7515,
+        "confidence": 0.85,
+        "rationale": "Planned actions for assess balance urgency, feasibility, and equity inputs."
+      },
+      {
+        "perspective": "risk_analyst",
+        "score": 0.648,
+        "confidence": 0.8,
+        "rationale": "Risk score anchors whether pre-impact response needs escalation now versus monitor."
+      },
+      {
+        "perspective": "operations",
+        "score": 0.764,
+        "confidence": 0.78,
+        "rationale": "Operational feasibility estimated from timing, resource pressure, and workload assumptions."
+      },
+      {
+        "perspective": "community_safety",
+        "score": 0.7600000000000001,
+        "confidence": 0.76,
+        "rationale": "Community safety score includes vulnerable-care and local comms readiness factors."
+      }
+    ],
+    "final_recommendation": "Use highest confidence triggers to update zone-level preparation and send pre-impact brief within 30 minutes.",
+    "contradiction_summary": "council agreement: recommendation set is coherent across all perspectives."
+  }
+}
+PASS
+
+==== plan JSON (risk override) ====
+{
+  "plugin_version": "0.1.0",
+  "generated_at": "2026-02-28T07:53:31Z",
+  "confidence": 0.86,
+  "evidence_references": [
+    "Pulau Brani Waterfront",
+    "90",
+    "households=550 volunteers=18 coordinators=4 transport_vehicles=6 buses=2 boats=1 first_aid_teams=2 generators=1"
+  ],
+  "actionability": {
+    "can_run_offline": true,
+    "estimated_minutes_to_act": 20,
+    "assumptions": [],
+    "missing_data": [],
+    "recommended_owner": "incident_commander"
+  },
+  "assessed_risk": 90,
+  "time_horizon_plan": {
+    "24h": [
+      {
+        "horizon": "24h",
+        "what": "Validate weather, tide, and river dashboards; publish watch state with 2 checkpoints.",
+        "who": "ops_lead",
+        "priority": 3,
+        "eta_minutes": 120,
+        "people_impacted": 0,
+        "targets_vulnerable": true
+      },
+      {
+        "horizon": "24h",
+        "what": "Inspect primary drains and place temporary barriers at choke points in Jetty Edge, Canal View, Old Dock.",
+        "who": "infrastructure_team",
+        "priority": 2,
+        "eta_minutes": 300,
+        "people_impacted": 90,
+        "targets_vulnerable": false
+      }
+    ],
+    "6h": [
+      {
+        "horizon": "6h",
+        "what": "Confirm household contact trees and text tree readiness; prepare multilingual advisory in EN/中文/Melayu/Tamil.",
+        "who": "comm_hub",
+        "priority": 2,
+        "eta_minutes": 180,
+        "people_impacted": 150,
+        "targets_vulnerable": true
+      },
+      {
+        "horizon": "6h",
+        "what": "Pre-position equipment and shelters for low-lying blocks in Jetty Edge, Canal View, Old Dock.",
+        "who": "logistics_unit",
+        "priority": 2,
+        "eta_minutes": 360,
+        "people_impacted": 220,
+        "targets_vulnerable": true
+      },
+      {
+        "horizon": "6h",
+        "what": "Request standby rescue support and activate shelters at two redundancy levels.",
+        "who": "neighborhood_coordinator",
+        "priority": 1,
+        "eta_minutes": 210,
+        "people_impacted": 320,
+        "targets_vulnerable": true
+      }
+    ],
+    "1h": [
+      {
+        "horizon": "1h",
+        "what": "Prepare evacuation points and route leaders with printed maps at command room and schools.",
+        "who": "coordination_team",
+        "priority": 1,
+        "eta_minutes": 45,
+        "people_impacted": 180,
+        "targets_vulnerable": true
+      },
+      {
+        "horizon": "1h",
+        "what": "Finalize check-in process for vulnerable households and welfare checks.",
+        "who": "vulnerable_care_team",
+        "priority": 2,
+        "eta_minutes": 60,
+        "people_impacted": 0,
+        "targets_vulnerable": true
+      },
+      {
+        "horizon": "1h",
+        "what": "Suspend non-essential road works and block flood-prone lanes.",
+        "who": "traffic_unit",
+        "priority": 1,
+        "eta_minutes": 20,
+        "people_impacted": 0,
+        "targets_vulnerable": false
+      }
+    ]
+  },
+  "task_assignment_matrix": [
+    {
+      "task": "Validate weather, tide, and river dashboards; publish watch state with 2 checkpoints.",
+      "owner": "ops_lead",
+      "what": "Ops Lead owns and checks completion.",
+      "priority": 3,
+      "eta_minutes": 120
+    },
+    {
+      "task": "Inspect primary drains and place temporary barriers at choke points in Jetty Edge, Canal View, Old Dock.",
+      "owner": "infrastructure_team",
+      "what": "Infrastructure Team owns and checks completion.",
+      "priority": 2,
+      "eta_minutes": 300
+    },
+    {
+      "task": "Confirm household contact trees and text tree readiness; prepare multilingual advisory in EN/中文/Melayu/Tamil.",
+      "owner": "comm_hub",
+      "what": "Comm Hub owns and checks completion.",
+      "priority": 2,
+      "eta_minutes": 180
+    },
+    {
+      "task": "Pre-position equipment and shelters for low-lying blocks in Jetty Edge, Canal View, Old Dock.",
+      "owner": "logistics_unit",
+      "what": "Logistics Unit owns and checks completion.",
+      "priority": 2,
+      "eta_minutes": 360
+    },
+    {
+      "task": "Request standby rescue support and activate shelters at two redundancy levels.",
+      "owner": "neighborhood_coordinator",
+      "what": "Neighborhood Coordinator owns and checks completion.",
+      "priority": 1,
+      "eta_minutes": 210
+    },
+    {
+      "task": "Prepare evacuation points and route leaders with printed maps at command room and schools.",
+      "owner": "coordination_team",
+      "what": "Coordination Team owns and checks completion.",
+      "priority": 1,
+      "eta_minutes": 45
+    },
+    {
+      "task": "Finalize check-in process for vulnerable households and welfare checks.",
+      "owner": "vulnerable_care_team",
+      "what": "Vulnerable Care Team owns and checks completion.",
+      "priority": 2,
+      "eta_minutes": 60
+    },
+    {
+      "task": "Suspend non-essential road works and block flood-prone lanes.",
+      "owner": "traffic_unit",
+      "what": "Traffic Unit owns and checks completion.",
+      "priority": 1,
+      "eta_minutes": 20
+    }
+  ],
+  "fallback_routes": [
+    "Pulau Brani Community Hall",
+    "Marina Bridge Evacuation Route"
+  ],
+  "shelter_suggestions": [
+    "Pulau Brani Community Hall"
+  ],
+  "materials_checklist": [
+    "sandbags",
+    "flood tags",
+    "portable radios",
+    "torch and batteries",
+    "water and food packets",
+    "welfare check forms",
+    "evacuation map printouts"
+  ],
+  "council_review": {
+    "final_rank": 71,
+    "perspectives": [
+      {
+        "perspective": "planner",
+        "score": 0.8237395833333333,
+        "confidence": 0.85,
+        "rationale": "Planned actions for plan balance urgency, feasibility, and equity inputs."
+      },
+      {
+        "perspective": "risk_analyst",
+        "score": 0.9217569444444446,
+        "confidence": 0.8,
+        "rationale": "Risk score anchors whether pre-impact response needs escalation now versus monitor."
+      },
+      {
+        "perspective": "operations",
+        "score": 0.5125243055555555,
+        "confidence": 0.78,
+        "rationale": "Operational feasibility estimated from timing, resource pressure, and workload assumptions."
+      },
+      {
+        "perspective": "community_safety",
+        "score": 0.594375,
+        "confidence": 0.76,
+        "rationale": "Community safety score includes vulnerable-care and local comms readiness factors."
+      }
+    ],
+    "final_recommendation": "Activate 24h/6h/1h plan by this order and confirm local command-room acknowledgement.",
+    "contradiction_summary": "perspectives differ: risk analyst is pushing for stronger readiness while operations may lag due to resource constraints. Prioritize high-risk routes and vulnerable checks first."
+  }
+}
+PASS
+
+==== agent JSON (inbox+simulate) ====
+{
+  "plugin_version": "0.1.0",
+  "generated_at": "2026-02-28T07:53:32Z",
+  "confidence": 0.78,
+  "evidence_references": [
+    "Pulau Brani Waterfront",
+    "61",
+    "82",
+    "['Heavy Rain Watch', 'Tidal Alert', 'Drainage advisory']"
+  ],
+  "actionability": {
+    "can_run_offline": true,
+    "estimated_minutes_to_act": 30,
+    "assumptions": [
+      "Simulation assumes linear runoff and no second-event peak in first 6h."
+    ],
+    "missing_data": [
+      "building-level flooding model calibration"
+    ],
+    "recommended_owner": "neighborhood_ops_cell/incident_commander/community_hub/simulation_owner"
+  },
+  "scenario": "Pulau Brani Waterfront",
+  "mission": "Adaptive neighborhood resilience guidance across assess/plan/monitor loops.",
+  "included_modules": [
+    "assess",
+    "plan",
+    "inbox",
+    "simulate"
+  ],
+  "assessed_risk": 61,
+  "readiness_gap": "vulnerable_care",
+  "immediate_actions": [
+    "traffic_unit: Suspend non-essential road works and block flood-prone lanes. (ETA 20m)",
+    "coordination_team: Prepare evacuation points and route leaders with printed maps at command room and schools. (ETA 45m)",
+    "neighborhood_coordinator: Request standby rescue support and activate shelters at two redundancy levels. (ETA 210m)",
+    "vulnerable_care_team: Finalize check-in process for vulnerable households and welfare checks. (ETA 60m)",
+    "comm_hub: Confirm household contact trees and text tree readiness; prepare multilingual advisory in EN/中文/Melayu/Tamil. (ETA 180m)",
+    "infrastructure_team: Inspect primary drains and place temporary barriers at choke points in Jetty Edge, Canal View, Old Dock. (ETA 300m)"
+  ],
+  "watchlist": [
+    "Readiness gaps to resolve: vulnerable_care",
+    "High-confidence incidents require active escalation routing.",
+    "Monitor highest-impact segment first: Canal View"
+  ],
+  "assess": {
+    "plugin_version": "0.1.0",
+    "generated_at": "2026-02-28T07:53:32Z",
+    "confidence": 0.8649999999999999,
+    "evidence_references": [
+      "Pulau Brani Waterfront",
+      "['Heavy Rain Watch', 'Tidal Alert', 'Drainage advisory']",
+      "[CriticalInfrastructure(name='Pulau Brani Community Hall', type='shelter', status='operational', capacity=220, zone='Jetty Edge', supports_evacuation=True, supports_vulnerable_care=True), CriticalInfrastructure(name='Canal Pump Station North', type='drainage', status='degraded', capacity=85, zone='Canal View', supports_evacuation=False, supports_vulnerable_care=False), CriticalInfrastructure(name='Harbour Siren Unit', type='siren', status='operational', capacity=1, zone='Old Dock', supports_evacuation=False, supports_vulnerable_care=False), CriticalInfrastructure(name='Barangay Radio Node', type='public_alert', status='operational', capacity=1500, zone='Jetty Edge', supports_evacuation=False, supports_vulnerable_care=False), CriticalInfrastructure(name='Marina Bridge Evacuation Route', type='evacuation_route', status='operational', capacity=300, zone='Canal View', supports_evacuation=True, supports_vulnerable_care=False)]"
+    ],
+    "actionability": {
+      "can_run_offline": true,
+      "estimated_minutes_to_act": 15,
+      "assumptions": [],
+      "missing_data": [],
+      "recommended_owner": "neighborhood_ops_cell"
+    },
+    "risk_score": 61,
+    "top_hazard_triggers": [
+      {
+        "name": "Alert Pressure",
+        "score": 1.0,
+        "reason": "3 active alerts in merged feeds."
+      },
+      {
+        "name": "Tidal",
+        "score": 0.8714285714285713,
+        "reason": "Current tide level 3.05m indicates potential backflow."
+      },
+      {
+        "name": "River",
+        "score": 0.7999999999999999,
+        "reason": "River gauge 2.8m near drainage limits."
+      },
+      {
+        "name": "Rainfall",
+        "score": 0.7307692307692307,
+        "reason": "24h rainfall forecast 190.0 mm over 24h."
+      },
+      {
+        "name": "Vulnerable Density",
+        "score": 0.4921946740128559,
+        "reason": "vulnerable population ratio 134/1815 (~7%)."
+      }
+    ],
+    "readiness_scores": {
+      "warning": 79,
+      "logistics": 100,
+      "vulnerable_care": 68,
+      "comms": 100,
+      "drills": 55
+    },
+    "readiness_gap": "vulnerable_care",
+    "assumptions": [],
+    "council_review": {
+      "final_rank": 73,
+      "perspectives": [
+        {
+          "perspective": "planner",
+          "score": 0.7515,
+          "confidence": 0.85,
+          "rationale": "Planned actions for assess balance urgency, feasibility, and equity inputs."
+        },
+        {
+          "perspective": "risk_analyst",
+          "score": 0.648,
+          "confidence": 0.8,
+          "rationale": "Risk score anchors whether pre-impact response needs escalation now versus monitor."
+        },
+        {
+          "perspective": "operations",
+          "score": 0.764,
+          "confidence": 0.78,
+          "rationale": "Operational feasibility estimated from timing, resource pressure, and workload assumptions."
+        },
+        {
+          "perspective": "community_safety",
+          "score": 0.7600000000000001,
+          "confidence": 0.76,
+          "rationale": "Community safety score includes vulnerable-care and local comms readiness factors."
+        }
+      ],
+      "final_recommendation": "Use highest confidence triggers to update zone-level preparation and send pre-impact brief within 30 minutes.",
+      "contradiction_summary": "council agreement: recommendation set is coherent across all perspectives."
+    }
+  },
+  "plan": {
+    "plugin_version": "0.1.0",
+    "generated_at": "2026-02-28T07:53:32Z",
+    "confidence": 0.86,
+    "evidence_references": [
+      "Pulau Brani Waterfront",
+      "82",
+      "households=550 volunteers=18 coordinators=4 transport_vehicles=6 buses=2 boats=1 first_aid_teams=2 generators=1"
+    ],
+    "actionability": {
+      "can_run_offline": true,
+      "estimated_minutes_to_act": 20,
+      "assumptions": [],
+      "missing_data": [],
+      "recommended_owner": "incident_commander"
+    },
+    "assessed_risk": 82,
+    "time_horizon_plan": {
+      "24h": [
+        {
+          "horizon": "24h",
+          "what": "Validate weather, tide, and river dashboards; publish watch state with 2 checkpoints.",
+          "who": "ops_lead",
+          "priority": 3,
+          "eta_minutes": 120,
+          "people_impacted": 0,
+          "targets_vulnerable": true
+        },
+        {
+          "horizon": "24h",
+          "what": "Inspect primary drains and place temporary barriers at choke points in Jetty Edge, Canal View, Old Dock.",
+          "who": "infrastructure_team",
+          "priority": 2,
+          "eta_minutes": 300,
+          "people_impacted": 90,
+          "targets_vulnerable": false
+        }
+      ],
+      "6h": [
+        {
+          "horizon": "6h",
+          "what": "Confirm household contact trees and text tree readiness; prepare multilingual advisory in EN/中文/Melayu/Tamil.",
+          "who": "comm_hub",
+          "priority": 2,
+          "eta_minutes": 180,
+          "people_impacted": 150,
+          "targets_vulnerable": true
+        },
+        {
+          "horizon": "6h",
+          "what": "Pre-position equipment and shelters for low-lying blocks in Jetty Edge, Canal View, Old Dock.",
+          "who": "logistics_unit",
+          "priority": 2,
+          "eta_minutes": 360,
+          "people_impacted": 220,
+          "targets_vulnerable": true
+        },
+        {
+          "horizon": "6h",
+          "what": "Request standby rescue support and activate shelters at two redundancy levels.",
+          "who": "neighborhood_coordinator",
+          "priority": 1,
+          "eta_minutes": 210,
+          "people_impacted": 320,
+          "targets_vulnerable": true
+        }
+      ],
+      "1h": [
+        {
+          "horizon": "1h",
+          "what": "Prepare evacuation points and route leaders with printed maps at command room and schools.",
+          "who": "coordination_team",
+          "priority": 1,
+          "eta_minutes": 45,
+          "people_impacted": 180,
+          "targets_vulnerable": true
+        },
+        {
+          "horizon": "1h",
+          "what": "Finalize check-in process for vulnerable households and welfare checks.",
+          "who": "vulnerable_care_team",
+          "priority": 2,
+          "eta_minutes": 60,
+          "people_impacted": 0,
+          "targets_vulnerable": true
+        },
+        {
+          "horizon": "1h",
+          "what": "Suspend non-essential road works and block flood-prone lanes.",
+          "who": "traffic_unit",
+          "priority": 1,
+          "eta_minutes": 20,
+          "people_impacted": 0,
+          "targets_vulnerable": false
+        }
+      ]
+    },
+    "task_assignment_matrix": [
+      {
+        "task": "Validate weather, tide, and river dashboards; publish watch state with 2 checkpoints.",
+        "owner": "ops_lead",
+        "what": "Ops Lead owns and checks completion.",
+        "priority": 3,
+        "eta_minutes": 120
+      },
+      {
+        "task": "Inspect primary drains and place temporary barriers at choke points in Jetty Edge, Canal View, Old Dock.",
+        "owner": "infrastructure_team",
+        "what": "Infrastructure Team owns and checks completion.",
+        "priority": 2,
+        "eta_minutes": 300
+      },
+      {
+        "task": "Confirm household contact trees and text tree readiness; prepare multilingual advisory in EN/中文/Melayu/Tamil.",
+        "owner": "comm_hub",
+        "what": "Comm Hub owns and checks completion.",
+        "priority": 2,
+        "eta_minutes": 180
+      },
+      {
+        "task": "Pre-position equipment and shelters for low-lying blocks in Jetty Edge, Canal View, Old Dock.",
+        "owner": "logistics_unit",
+        "what": "Logistics Unit owns and checks completion.",
+        "priority": 2,
+        "eta_minutes": 360
+      },
+      {
+        "task": "Request standby rescue support and activate shelters at two redundancy levels.",
+        "owner": "neighborhood_coordinator",
+        "what": "Neighborhood Coordinator owns and checks completion.",
+        "priority": 1,
+        "eta_minutes": 210
+      },
+      {
+        "task": "Prepare evacuation points and route leaders with printed maps at command room and schools.",
+        "owner": "coordination_team",
+        "what": "Coordination Team owns and checks completion.",
+        "priority": 1,
+        "eta_minutes": 45
+      },
+      {
+        "task": "Finalize check-in process for vulnerable households and welfare checks.",
+        "owner": "vulnerable_care_team",
+        "what": "Vulnerable Care Team owns and checks completion.",
+        "priority": 2,
+        "eta_minutes": 60
+      },
+      {
+        "task": "Suspend non-essential road works and block flood-prone lanes.",
+        "owner": "traffic_unit",
+        "what": "Traffic Unit owns and checks completion.",
+        "priority": 1,
+        "eta_minutes": 20
+      }
+    ],
+    "fallback_routes": [
+      "Pulau Brani Community Hall",
+      "Marina Bridge Evacuation Route"
+    ],
+    "shelter_suggestions": [
+      "Pulau Brani Community Hall"
+    ],
+    "materials_checklist": [
+      "sandbags",
+      "flood tags",
+      "portable radios",
+      "torch and batteries",
+      "water and food packets",
+      "welfare check forms",
+      "evacuation map printouts"
+    ],
+    "council_review": {
+      "final_rank": 69,
+      "perspectives": [
+        {
+          "perspective": "planner",
+          "score": 0.8097395833333333,
+          "confidence": 0.85,
+          "rationale": "Planned actions for plan balance urgency, feasibility, and equity inputs."
+        },
+        {
+          "perspective": "risk_analyst",
+          "score": 0.8697569444444445,
+          "confidence": 0.8,
+          "rationale": "Risk score anchors whether pre-impact response needs escalation now versus monitor."
+        },
+        {
+          "perspective": "operations",
+          "score": 0.5152118055555556,
+          "confidence": 0.78,
+          "rationale": "Operational feasibility estimated from timing, resource pressure, and workload assumptions."
+        },
+        {
+          "perspective": "community_safety",
+          "score": 0.594375,
+          "confidence": 0.76,
+          "rationale": "Community safety score includes vulnerable-care and local comms readiness factors."
+        }
+      ],
+      "final_recommendation": "Activate 24h/6h/1h plan by this order and confirm local command-room acknowledgement.",
+      "contradiction_summary": "perspectives differ: risk analyst is pushing for stronger readiness while operations may lag due to resource constraints. Prioritize high-risk routes and vulnerable checks first."
+    }
+  },
+  "inbox": {
+    "plugin_version": "0.1.0",
+    "generated_at": "2026-02-28T07:53:32Z",
+    "confidence": 0.8,
+    "evidence_references": [
+      "social snippets",
+      "media links",
+      "severity tags"
+    ],
+    "actionability": {
+      "can_run_offline": true,
+      "estimated_minutes_to_act": 8,
+      "assumptions": [],
+      "missing_data": [],
+      "recommended_owner": "community_hub"
+    },
+    "incident_clusters": {
+      "drainage_blockage": 1,
+      "evacuation_request": 2,
+      "shelter_capacity": 1
+    },
+    "confidence_ranked_incident_cards": [
+      {
+        "incident_id": "INC-001",
+        "cluster": "drainage_blockage",
+        "text": "Drainage at Marina Bridge blocked after tide came in, water is rising near ground floors.",
+        "confidence": 1.0,
+        "media_count": 1,
+        "severity": "high",
+        "suggested_owner": "local_coordination_hub"
+      },
+      {
+        "incident_id": "INC-003",
+        "cluster": "evacuation_request",
+        "text": "Stranded family on ground floor asks rescue near pump station",
+        "confidence": 1.0,
+        "media_count": 2,
+        "severity": "urgent",
+        "suggested_owner": "local_coordination_hub"
+      },
+      {
+        "incident_id": "INC-002",
+        "cluster": "evacuation_request",
+        "text": "Power in Canal View went out, but people still in place. Please confirm evacuation point.",
+        "confidence": 0.9500000000000001,
+        "media_count": 0,
+        "severity": "medium",
+        "suggested_owner": "local_coordination_hub"
+      },
+      {
+        "incident_id": "INC-004",
+        "cluster": "shelter_capacity",
+        "text": "Shelter has space but signage is not visible to elderly residents",
+        "confidence": 0.9500000000000001,
+        "media_count": 0,
+        "severity": "medium",
+        "suggested_owner": "local_coordination_hub"
+      }
+    ],
+    "escalation_decisions": [
+      {
+        "incident_id": "INC-001",
+        "decision": "escalate_to_emergency_services",
+        "reasoning": "High confidence with corroborating media evidence. Immediate verification and field dispatch recommended."
+      },
+      {
+        "incident_id": "INC-003",
+        "decision": "escalate_to_emergency_services",
+        "reasoning": "High confidence with corroborating media evidence. Immediate verification and field dispatch recommended."
+      },
+      {
+        "incident_id": "INC-002",
+        "decision": "escalate_to_emergency_services",
+        "reasoning": "High confidence with corroborating media evidence. Immediate verification and field dispatch recommended."
+      },
+      {
+        "incident_id": "INC-004",
+        "decision": "escalate_to_emergency_services",
+        "reasoning": "High confidence with corroborating media evidence. Immediate verification and field dispatch recommended."
+      }
+    ],
+    "council_review": {
+      "final_rank": 67,
+      "perspectives": [
+        {
+          "perspective": "planner",
+          "score": 0.7549999999999999,
+          "confidence": 0.85,
+          "rationale": "Planned actions for inbox balance urgency, feasibility, and equity inputs."
+        },
+        {
+          "perspective": "risk_analyst",
+          "score": 0.8150000000000001,
+          "confidence": 0.8,
+          "rationale": "Risk score anchors whether pre-impact response needs escalation now versus monitor."
+        },
+        {
+          "perspective": "operations",
+          "score": 0.5725,
+          "confidence": 0.78,
+          "rationale": "Operational feasibility estimated from timing, resource pressure, and workload assumptions."
+        },
+        {
+          "perspective": "community_safety",
+          "score": 0.56,
+          "confidence": 0.76,
+          "rationale": "Community safety score includes vulnerable-care and local comms readiness factors."
+        }
+      ],
+      "final_recommendation": "Escalate confirmed incidents immediately and suppress duplicate low-confidence duplicates.",
+      "contradiction_summary": "perspectives differ: risk analyst is pushing for stronger readiness while operations may lag due to resource constraints. Prioritize high-risk routes and vulnerable checks first."
+    }
+  },
+  "simulate": {
+    "plugin_version": "0.1.0",
+    "generated_at": "2026-02-28T07:53:32Z",
+    "confidence": 0.78,
+    "evidence_references": [
+      "hypo-sg-coastal-72h",
+      "['Flash Flood Warning', 'Coastal Flood Watch']"
+    ],
+    "actionability": {
+      "can_run_offline": true,
+      "estimated_minutes_to_act": 30,
+      "assumptions": [
+        "Simulation assumes linear runoff and no second-event peak in first 6h."
+      ],
+      "missing_data": [
+        "building-level flooding model calibration"
+      ],
+      "recommended_owner": "simulation_owner"
+    },
+    "predicted_impact_by_segment": [
+      {
+        "segment": "Canal View",
+        "estimated_people_impacted": 624,
+        "confidence": 0.95,
+        "action_need_rank": 1
+      },
+      {
+        "segment": "Jetty Edge",
+        "estimated_people_impacted": 375,
+        "confidence": 0.95,
+        "action_need_rank": 2
+      },
+      {
+        "segment": "Old Dock",
+        "estimated_people_impacted": 221,
+        "confidence": 0.7987510714285716,
+        "action_need_rank": 3
+      }
+    ],
+    "recommended_preemptive_actions": [
+      {
+        "horizon": "24h",
+        "what": "Move rescue and welfare teams to highest impact segment before floodfront reaches it.",
+        "who": "rescue_team",
+        "priority": 1,
+        "eta_minutes": 120,
+        "people_impacted": 624,
+        "targets_vulnerable": true
+      },
+      {
+        "horizon": "24h",
+        "what": "Stage shelter stocks for low-elevation blocks with multilingual reception desks.",
+        "who": "shelter_ops",
+        "priority": 2,
+        "eta_minutes": 180,
+        "people_impacted": 624,
+        "targets_vulnerable": true
+      }
+    ],
+    "first_60_minute_actions": [
+      {
+        "horizon": "1h",
+        "what": "Activate command room and publish 60-minute action script.",
+        "who": "ops_lead",
+        "priority": 1,
+        "eta_minutes": 10,
+        "people_impacted": 80,
+        "targets_vulnerable": true
+      },
+      {
+        "horizon": "1h",
+        "what": "Dispatch route inspection teams to top three roads on the live map.",
+        "who": "routing_unit",
+        "priority": 1,
+        "eta_minutes": 25,
+        "people_impacted": 40,
+        "targets_vulnerable": false
+      }
+    ],
+    "council_review": {
+      "final_rank": 71,
+      "perspectives": [
+        {
+          "perspective": "planner",
+          "score": 0.8198541666666667,
+          "confidence": 0.85,
+          "rationale": "Planned actions for simulate balance urgency, feasibility, and equity inputs."
+        },
+        {
+          "perspective": "risk_analyst",
+          "score": 0.8700138888888889,
+          "confidence": 0.8,
+          "rationale": "Risk score anchors whether pre-impact response needs escalation now versus monitor."
+        },
+        {
+          "perspective": "operations",
+          "score": 0.5903229166666667,
+          "confidence": 0.78,
+          "rationale": "Operational feasibility estimated from timing, resource pressure, and workload assumptions."
+        },
+        {
+          "perspective": "community_safety",
+          "score": 0.594375,
+          "confidence": 0.76,
+          "rationale": "Community safety score includes vulnerable-care and local comms readiness factors."
+        }
+      ],
+      "final_recommendation": "Focus response on the top impact zones and pre-position assets before predicted water arrival.",
+      "contradiction_summary": "perspectives differ: risk analyst is pushing for stronger readiness while operations may lag due to resource constraints. Prioritize high-risk routes and vulnerable checks first."
+    }
+  }
+}
+PASS
+
+==== fixture input JSON ====
+{
+  "plugin_version": "0.1.0",
+  "generated_at": "2026-02-28T07:53:32Z",
+  "confidence": 0.8649999999999999,
+  "evidence_references": [
+    "Pulau Brani Waterfront",
+    "['Heavy Rain Watch', 'Tidal Alert', 'Drainage advisory']",
+    "[CriticalInfrastructure(name='Pulau Brani Community Hall', type='shelter', status='operational', capacity=220, zone='Jetty Edge', supports_evacuation=True, supports_vulnerable_care=True), CriticalInfrastructure(name='Canal Pump Station North', type='drainage', status='degraded', capacity=85, zone='Canal View', supports_evacuation=False, supports_vulnerable_care=False), CriticalInfrastructure(name='Harbour Siren Unit', type='siren', status='operational', capacity=1, zone='Old Dock', supports_evacuation=False, supports_vulnerable_care=False), CriticalInfrastructure(name='Barangay Radio Node', type='public_alert', status='operational', capacity=1500, zone='Jetty Edge', supports_evacuation=False, supports_vulnerable_care=False), CriticalInfrastructure(name='Marina Bridge Evacuation Route', type='evacuation_route', status='operational', capacity=300, zone='Canal View', supports_evacuation=True, supports_vulnerable_care=False)]"
+  ],
+  "actionability": {
+    "can_run_offline": true,
+    "estimated_minutes_to_act": 15,
+    "assumptions": [],
+    "missing_data": [],
+    "recommended_owner": "neighborhood_ops_cell"
+  },
+  "risk_score": 61,
+  "top_hazard_triggers": [
+    {
+      "name": "Alert Pressure",
+      "score": 1.0,
+      "reason": "3 active alerts in merged feeds."
+    },
+    {
+      "name": "Tidal",
+      "score": 0.8714285714285713,
+      "reason": "Current tide level 3.05m indicates potential backflow."
+    },
+    {
+      "name": "River",
+      "score": 0.7999999999999999,
+      "reason": "River gauge 2.8m near drainage limits."
+    },
+    {
+      "name": "Rainfall",
+      "score": 0.7307692307692307,
+      "reason": "24h rainfall forecast 190.0 mm over 24h."
+    },
+    {
+      "name": "Vulnerable Density",
+      "score": 0.4921946740128559,
+      "reason": "vulnerable population ratio 134/1815 (~7%)."
+    }
+  ],
+  "readiness_scores": {
+    "warning": 79,
+    "logistics": 100,
+    "vulnerable_care": 68,
+    "comms": 100,
+    "drills": 55
+  },
+  "readiness_gap": "vulnerable_care",
+  "assumptions": [],
+  "council_review": {
+    "final_rank": 73,
+    "perspectives": [
+      {
+        "perspective": "planner",
+        "score": 0.7515,
+        "confidence": 0.85,
+        "rationale": "Planned actions for assess balance urgency, feasibility, and equity inputs."
+      },
+      {
+        "perspective": "risk_analyst",
+        "score": 0.648,
+        "confidence": 0.8,
+        "rationale": "Risk score anchors whether pre-impact response needs escalation now versus monitor."
+      },
+      {
+        "perspective": "operations",
+        "score": 0.764,
+        "confidence": 0.78,
+        "rationale": "Operational feasibility estimated from timing, resource pressure, and workload assumptions."
+      },
+      {
+        "perspective": "community_safety",
+        "score": 0.7600000000000001,
+        "confidence": 0.76,
+        "rationale": "Community safety score includes vulnerable-care and local comms readiness factors."
+      }
+    ],
+    "final_recommendation": "Use highest confidence triggers to update zone-level preparation and send pre-impact brief within 30 minutes.",
+    "contradiction_summary": "council agreement: recommendation set is coherent across all perspectives."
+  }
+}
+PASS
+
+==== Expected failure path ====
+PASS: clean validation error observed
+
+==== Codex discovery ====
+PASS: /Users/weijuin/.codex/skills/resilienceOS -> /Users/weijuin/Documents/resilienceOS
+PASS: resilienceos.skill.json found via Codex discovery path
+
+==== Healthcheck summary ====
+Failures: 0
+Result: PASS
+Done.
