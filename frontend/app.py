@@ -1,7 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
+import json
 import sys
+import urllib.error
+import urllib.request
+import urllib.parse
+import time
 
 import streamlit as st
 
@@ -10,6 +16,8 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from resilienceos.engine import _openai_api_key
+from resilienceos.engine import _openai_config
 from resilienceos.engine import assess as run_assess
 from resilienceos.engine import agent as run_agent
 from resilienceos.engine import drill as run_drill
@@ -127,6 +135,47 @@ def _collect_council_bullets(payload: dict, limit: int = 3) -> list[str]:
 
     scores.sort(key=lambda row: row[0], reverse=True)
     return [text for _score, text in scores[:limit]]
+
+
+def _check_openai_connection() -> tuple[bool, str]:
+    api_key = _openai_api_key()
+    if not api_key:
+        return False, "No API key configured. Set OPENAI_API_KEY in environment."
+
+    config = _openai_config()
+    endpoint = f"{config['base_url'].rstrip('/')}/models"
+    base_host = urllib.parse.urlparse(config["base_url"]).hostname or config["base_url"]
+    started_at = time.time()
+    request = urllib.request.Request(
+        endpoint,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Accept": "application/json",
+        },
+        method="GET",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=config["timeout"]) as response:
+            status = getattr(response, "status", 200)
+            if status != 200:
+                return False, f"{base_host} returned HTTP {status} for /models"
+            response.read(128)
+            elapsed_ms = int((time.time() - started_at) * 1000)
+            return True, f"Connected to {base_host}/models via {config['model']} in {elapsed_ms}ms"
+    except urllib.error.HTTPError as error:
+        return False, f"{base_host} rejected /models: HTTP {error.code} ({error.reason})"
+    except urllib.error.URLError as error:
+        return False, f"Cannot reach {base_host}: {error.reason}"
+    except Exception as error:
+        return False, f"Connection error to {base_host}: {error}"
+
+
+def _openai_feature_enabled(feature: str) -> bool:
+    value = os.getenv(f"RESILIENCEOS_DISABLE_OPENAI_{feature}", "0").strip().lower()
+    if value in {"1", "true", "yes", "on"}:
+        return False
+    return True
 
 
 def _explain_text(payload: dict) -> str:
@@ -265,6 +314,26 @@ def _decision_summary(payload: dict) -> list[tuple[str, str]]:
 st.set_page_config(page_title="resilienceOS Dashboard", layout="wide")
 st.title("resilienceOS AI Dashboard")
 st.caption("Visual command runner for neighborhood resilience scenarios")
+if "openai_health" not in st.session_state:
+    st.session_state["openai_health"] = _check_openai_connection()
+
+st.sidebar.header("OpenAI connection")
+if st.sidebar.button("Re-check OpenAI connection"):
+    st.session_state["openai_health"] = _check_openai_connection()
+
+openai_ok, openai_msg = st.session_state["openai_health"]
+if openai_ok:
+    st.sidebar.success("OpenAI: Connected")
+    st.sidebar.caption(openai_msg)
+    st.sidebar.caption(
+        "Assess: "
+        + ("enabled" if _openai_feature_enabled("ASSESS") else "disabled (override)")
+        + " · Plan: "
+        + ("enabled" if _openai_feature_enabled("PLAN") else "disabled (override)")
+    )
+else:
+    st.sidebar.error("OpenAI: Not connected")
+    st.sidebar.caption(openai_msg)
 
 scenario_options = list(SCENARIOS.keys())
 command_options = [

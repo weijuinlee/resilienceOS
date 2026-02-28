@@ -277,6 +277,18 @@ def _call_openai_for_json(prompt: str, max_tokens: int | None = None) -> tuple[D
             raw = response.read().decode("utf-8")
             _trace_openai("json", f"status={getattr(response, 'status', 'n/a')} bytes={len(raw)}")
             response_data = json.loads(raw)
+            request_id = response.headers.get("x-request-id") if hasattr(response, "headers") else None
+            if request_id:
+                _trace_openai("json", f"request_id={request_id}")
+            usage = response_data.get("usage") if isinstance(response_data, dict) else None
+            if isinstance(usage, dict):
+                prompt_tokens = usage.get("prompt_tokens", "n/a")
+                completion_tokens = usage.get("completion_tokens", "n/a")
+                total_tokens = usage.get("total_tokens", "n/a")
+                _trace_openai(
+                    "json",
+                    f"usage prompt={prompt_tokens} completion={completion_tokens} total={total_tokens}",
+                )
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as error:
         _trace_openai("json", f"error={error!r}")
         return None, f"error:{error!r}"
