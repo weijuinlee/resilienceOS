@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import json
+import sys
 import re
 import urllib.error
 import urllib.request
@@ -229,14 +230,26 @@ def _extract_plan_snippet(plan: Dict[str, Any]) -> Dict[str, Any]:
     return snippet
 
 
+def _openai_trace_enabled() -> bool:
+    value = os.getenv("RESILIENCEOS_OPENAI_TRACE", "0").strip().lower()
+    return value in {"1", "true", "yes", "on"}
+
+
+def _trace_openai(feature: str, message: str) -> None:
+    if _openai_trace_enabled():
+        print(f"[resilienceos-openai:{feature}] {message}", file=sys.stderr)
+
+
 def _call_openai_for_json(prompt: str, max_tokens: int | None = None) -> tuple[Dict[str, Any] | None, str]:
     api_key = _openai_api_key()
     if not api_key:
+        _trace_openai("json", "no api key")
         return None, "no-api-key"
 
     config = _openai_config()
     base = config["base_url"].rstrip("/")
     endpoint = f"{base}/chat/completions"
+    _trace_openai("json", f"POST {endpoint} model={config['model']}")
     request_body = {
         "model": config["model"],
         "messages": [
@@ -245,6 +258,7 @@ def _call_openai_for_json(prompt: str, max_tokens: int | None = None) -> tuple[D
         ],
         "temperature": 0.1,
         "max_tokens": max_tokens or config["max_tokens"],
+        "response_format": {"type": "json_object"},
     }
 
     request = urllib.request.Request(
@@ -260,8 +274,11 @@ def _call_openai_for_json(prompt: str, max_tokens: int | None = None) -> tuple[D
 
     try:
         with urllib.request.urlopen(request, timeout=config["timeout"]) as response:
-            response_data = json.loads(response.read().decode("utf-8"))
+            raw = response.read().decode("utf-8")
+            _trace_openai("json", f"status={getattr(response, 'status', 'n/a')} bytes={len(raw)}")
+            response_data = json.loads(raw)
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as error:
+        _trace_openai("json", f"error={error!r}")
         return None, f"error:{error!r}"
 
     choices = response_data.get("choices") if isinstance(response_data, dict) else None
@@ -271,6 +288,7 @@ def _call_openai_for_json(prompt: str, max_tokens: int | None = None) -> tuple[D
     message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
     content = message.get("content") if isinstance(message, dict) else None
     if not isinstance(content, str) or not content.strip():
+        _trace_openai("json", "empty content from model")
         return None, "error:empty-content"
 
     payload = _extract_json_block(content.strip())
@@ -280,6 +298,7 @@ def _call_openai_for_json(prompt: str, max_tokens: int | None = None) -> tuple[D
     try:
         parsed = json.loads(payload)
     except json.JSONDecodeError as error:
+        _trace_openai("json", f"invalid-json: {error}")
         return None, f"error:invalid-json:{error}"
 
     if not isinstance(parsed, dict):
@@ -438,8 +457,8 @@ def assess(payload: AssessInput) -> AssessOutput:
                     if isinstance(item, str):
                         llm_missing.append(item)
         else:
-            llm_assumptions.append("LLM assess refinement failed; using deterministic baseline.")
-            llm_missing.append("LLM assess unavailable")
+            llm_assumptions.append(f"LLM assess refinement failed ({llm_model}); using deterministic baseline.")
+            llm_missing.append(f"LLM assess unavailable: {llm_model}")
 
     if len(triggers) < 5:
         filler = [
@@ -744,8 +763,8 @@ def plan(payload: PlanInput) -> PlanOutput:
                     if isinstance(item, str):
                         llm_missing.append(item)
         else:
-            llm_assumptions.append("LLM plan refinement failed; using deterministic baseline.")
-            llm_missing.append("LLM plan unavailable")
+            llm_assumptions.append(f"LLM plan refinement failed ({llm_model}); using deterministic baseline.")
+            llm_missing.append(f"LLM plan unavailable: {llm_model}")
 
     updated_time_horizon = {"24h": [], "6h": [], "1h": []}
     for action in flat_actions:
