@@ -67,11 +67,43 @@ smoke-installed:
 	$(VENV_BIN)/resilienceos assess --input fixtures/scenario_singapore_coastal.json --format json
 
 smoke-fast:
-	$(VENV_BIN)/resilienceos assess --scenario $(SCENARIO) --format json | jq '.risk_score, .readiness_scores'
-	$(VENV_BIN)/resilienceos plan --scenario $(SCENARIO) --assessed-risk 90 --format json | jq '.time_horizon_plan["6h"], .task_assignment_matrix[:2]'
-	$(VENV_BIN)/resilienceos agent --scenario $(SCENARIO) --include-inbox --include-simulate --format json | jq '.scenario, .immediate_actions, .watchlist'
-	$(VENV_BIN)/resilienceos explain --scenario $(SCENARIO) --format json | jq '.plain_language_rationale'
-	$(VENV_BIN)/resilienceos assess --format xml || true
+	@set -euo pipefail; \
+	SCENARIO_NAME="$(SCENARIO)"; \
+	TIMESTAMP="$$(date -u +%Y%m%dT%H%M%SZ)"; \
+	LOG_FILE="outputs/smoke-fast-$${TIMESTAMP}.log"; \
+	mkdir -p outputs; \
+	if [ -x "$(VENV_BIN)/resilienceos" ]; then \
+		CLI="$(VENV_BIN)/resilienceos"; \
+	elif command -v resilienceos >/dev/null 2>&1; then \
+		CLI="resilienceos"; \
+	else \
+		echo "resilienceos CLI not found. Run: make install-offline"; \
+		exit 1; \
+	fi; \
+	run_view() { \
+		label="$$1"; shift; \
+		expr="$$1"; shift; \
+		echo "==== $$label (scenario=$${SCENARIO_NAME}) ====" | tee -a "$$LOG_FILE"; \
+		if command -v jq >/dev/null 2>&1; then \
+			"$$CLI" "$$@" --format json | jq -r "$$expr" | tee -a "$$LOG_FILE"; \
+		else \
+			echo "WARN: jq not installed; showing raw JSON for $$label" | tee -a "$$LOG_FILE"; \
+			"$$CLI" "$$@" --format json | tee -a "$$LOG_FILE"; \
+		fi; \
+	}; \
+	run_view "Assess" ".risk_score, .readiness_scores" assess --scenario "$${SCENARIO_NAME}" ; \
+	run_view "Plan 6h+" ".time_horizon_plan[\"6h\"], .task_assignment_matrix[:2]" plan --scenario "$${SCENARIO_NAME}" --assessed-risk 90; \
+	run_view "Agent focus" ".scenario, .immediate_actions, .watchlist" agent --scenario "$${SCENARIO_NAME}" --include-inbox --include-simulate; \
+	run_view "Explain" ".plain_language_rationale" explain --scenario "$${SCENARIO_NAME}"; \
+	if "$$CLI" assess --format xml >/tmp/smoke-fast-xml-$${TIMESTAMP}.txt 2>&1; then \
+		echo "FAIL: assess xml unexpectedly succeeded" | tee -a "$$LOG_FILE"; \
+		exit 1; \
+	else \
+		echo "PASS: invalid format failure observed" | tee -a "$$LOG_FILE"; \
+		echo "Output: $$(cat /tmp/smoke-fast-xml-$${TIMESTAMP}.txt | sed -n '1,4p' )" | tee -a "$$LOG_FILE"; \
+		rm -f /tmp/smoke-fast-xml-$${TIMESTAMP}.txt; \
+	fi; \
+	echo "Smoke-fast log: $$LOG_FILE"
 
 smoke-skill:
 	bash .agents/skills/resilienceos/scripts/resilienceos-smoke-checks.sh
@@ -108,14 +140,20 @@ demo-shot:
 	bash scripts/resilienceos-demo-shot.sh
 
 demo-local:
-	@set -a; \
+	@if [ ! -x "$(VENV_BIN)/python" ]; then \
+		echo "Missing python in $(VENV_BIN). Run make install-offline first."; \
+		exit 1; \
+	fi; \
+	if [ ! -x "$(VENV_BIN)/streamlit" ]; then \
+		echo "Streamlit not installed in $(VENV_BIN). Run make ui once to install it."; \
+		exit 1; \
+	fi; \
 	if [ -f "$(DEMO_PRESET)" ]; then \
-		. "$(DEMO_PRESET)"; \
+		set -a; . "$(DEMO_PRESET)"; set +a; \
 	else \
 		echo "Missing preset file: $(DEMO_PRESET)"; \
 		exit 1; \
 	fi; \
-	set +a; \
 	VENV_BIN=$(VENV_BIN) \
 	bash scripts/resilienceos-demo-ui.sh
 
