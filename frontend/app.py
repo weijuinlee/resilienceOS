@@ -95,6 +95,55 @@ def _read_payload(command: str, input_file: str | None, scenario: str) -> dict:
     return load_input(input_file, scenario, command)
 
 
+def _collect_council_bullets(payload: dict, limit: int = 3) -> list[str]:
+    scores = []
+
+    def collect_from_payload(data: dict, prefix: str | None = None) -> None:
+        if not isinstance(data, dict):
+            return
+        review = data.get("council_review")
+        if not isinstance(review, dict):
+            return
+        perspectives = review.get("perspectives")
+        if not isinstance(perspectives, list):
+            return
+        for item in perspectives:
+            if not isinstance(item, dict):
+                continue
+            rationale = item.get("rationale", "")
+            perspective = item.get("perspective", "")
+            if not rationale or not perspective:
+                continue
+            label = perspective
+            if prefix:
+                label = f"{prefix}: {label}"
+            scores.append((item.get("score", 0.0), f"{label} ({item.get('score', 0.0):.2f}) - {rationale}"))
+
+    collect_from_payload(payload)
+    for key in ("assess", "plan", "inbox", "simulate", "drill"):
+        child = payload.get(key, {})
+        if isinstance(child, dict):
+            collect_from_payload(child, key)
+
+    scores.sort(key=lambda row: row[0], reverse=True)
+    return [text for _score, text in scores[:limit]]
+
+
+def _explain_text(payload: dict) -> str:
+    if not isinstance(payload, dict):
+        return ""
+
+    existing = payload.get("plain_language_rationale")
+    if isinstance(existing, str) and existing.strip():
+        return existing.strip()
+
+    try:
+        explanation = run_explain(ExplainInput(generated_plan=payload))
+        return explanation.plain_language_rationale.strip()
+    except Exception:
+        return ""
+
+
 def run_selected_command(
     command: str,
     scenario: str,
@@ -360,6 +409,19 @@ if should_run:
             st.write("### Immediate actions")
             for item in payload["immediate_actions"]:
                 st.write(f"- {item}")
+
+        st.subheader("Why this order?")
+        rationale_bullets = _collect_council_bullets(payload, limit=3)
+        if rationale_bullets:
+            for item in rationale_bullets:
+                st.write(f"- {item}")
+        else:
+            st.info("No rationale bullets available.")
+
+        concise_lines = _explain_text(payload)
+        if concise_lines:
+            st.subheader("Concise brief")
+            st.write(concise_lines)
 
         with st.expander("Raw JSON payload"):
             st.json(payload)

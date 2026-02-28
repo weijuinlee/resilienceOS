@@ -34,9 +34,10 @@
           "description": "Output format.",
           "required": false,
           "default": "json",
-          "choices": [
+            "choices": [
             "json",
-            "markdown"
+            "markdown",
+            "concise_brief"
           ]
         }
       ]
@@ -78,9 +79,10 @@
           "description": "Output format.",
           "required": false,
           "default": "json",
-          "choices": [
+            "choices": [
             "json",
-            "markdown"
+            "markdown",
+            "concise_brief"
           ]
         }
       ]
@@ -128,9 +130,10 @@
           "description": "Output format.",
           "required": false,
           "default": "json",
-          "choices": [
+            "choices": [
             "json",
-            "markdown"
+            "markdown",
+            "concise_brief"
           ]
         }
       ]
@@ -164,9 +167,10 @@
           "description": "Output format.",
           "required": false,
           "default": "json",
-          "choices": [
+            "choices": [
             "json",
-            "markdown"
+            "markdown",
+            "concise_brief"
           ]
         }
       ]
@@ -200,9 +204,10 @@
           "description": "Output format.",
           "required": false,
           "default": "json",
-          "choices": [
+            "choices": [
             "json",
-            "markdown"
+            "markdown",
+            "concise_brief"
           ]
         }
       ]
@@ -236,9 +241,10 @@
           "description": "Output format.",
           "required": false,
           "default": "json",
-          "choices": [
+            "choices": [
             "json",
-            "markdown"
+            "markdown",
+            "concise_brief"
           ]
         }
       ]
@@ -272,9 +278,10 @@
           "description": "Output format.",
           "required": false,
           "default": "json",
-          "choices": [
+            "choices": [
             "json",
-            "markdown"
+            "markdown",
+            "concise_brief"
           ]
         }
       ]
