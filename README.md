@@ -158,6 +158,7 @@ skill-installer install <https://github.com/<org>/<repo>.git>
 ```
 
 After install, restart Codex and verify `resilienceOS` appears in the skill list.
+Published Smithery entry: https://smithery.ai/skills/wjuin/resilienceos
 
 ## Release/build helpers
 
