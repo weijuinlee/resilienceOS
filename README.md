@@ -59,12 +59,16 @@ Each output includes:
 The current implementation is local-first and deterministic.
 Hook points for API sources are in `src/resilienceos/utils.py` (`load_input`) and can be replaced by live fetchers without changing command behavior.
 
-## Optional LLM-enhanced explainability
+## Optional LLM-enhanced resilience logic
 
 Each user/deployment should use their own OpenAI key locally (bring-your-own-key).
 Do not commit provider keys in this repository or in preset files.
 
-You can enable richer rationale generation by setting an OpenAI key:
+You can enable three optional enhancement modes with your own OpenAI key:
+
+- `assess` risk-readiness refinement
+- `plan` action-priority/ordering refinement
+- `explain` richer human-readable rationale
 
 ```bash
 export OPENAI_API_KEY="sk-..."
@@ -81,7 +85,7 @@ cp openai.env.example .env.openai
 # Works with either raw key-value lines or `export KEY=...`.
 ```
 
-When configured, `explain` outputs (and anything that auto-generates `plain_language_rationale`, such as `--format concise_brief` and the Streamlit "Concise brief" panel) will use LLM-powered explanation text when available.
+When configured, `assess`, `plan`, and `explain` can use LLM-assisted refinement/reasoning while preserving deterministic behavior when unavailable.
 
 Fallback behavior:
 - If no key is set, skill stays deterministic.

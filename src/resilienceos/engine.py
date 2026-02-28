@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import json
+import re
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -167,6 +168,30 @@ def _llm_disabled() -> bool:
     return value in {"1", "true", "yes", "on"}
 
 
+def _llm_disabled_for(feature: str) -> bool:
+    override = os.getenv(f"RESILIENCEOS_DISABLE_OPENAI_{feature.upper()}", "0").strip().lower()
+    if override in {"1", "true", "yes", "on"}:
+        return True
+    return _llm_disabled()
+
+
+def _safe01(value: float) -> float:
+    return max(0.0, min(1.0, value))
+
+
+def _safe_int(value: float, low: int, high: int) -> int:
+    return int(max(low, min(high, round(value))))
+
+
+def _extract_json_block(text: str) -> str | None:
+    if not text:
+        return None
+    match = re.search(r"\{[\s\S]*\}", text)
+    if match:
+        return match.group(0)
+    return None
+
+
 def _extract_plan_snippet(plan: Dict[str, Any]) -> Dict[str, Any]:
     snippet = {
         "evidence_references": plan.get("evidence_references", []),
@@ -202,6 +227,64 @@ def _extract_plan_snippet(plan: Dict[str, Any]) -> Dict[str, Any]:
     if "council_review" in plan:
         snippet["council_review"] = plan.get("council_review")
     return snippet
+
+
+def _call_openai_for_json(prompt: str, max_tokens: int | None = None) -> tuple[Dict[str, Any] | None, str]:
+    api_key = _openai_api_key()
+    if not api_key:
+        return None, "no-api-key"
+
+    config = _openai_config()
+    base = config["base_url"].rstrip("/")
+    endpoint = f"{base}/chat/completions"
+    request_body = {
+        "model": config["model"],
+        "messages": [
+            {"role": "system", "content": "You are a deterministic municipal resilience operations assistant."},
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.1,
+        "max_tokens": max_tokens or config["max_tokens"],
+    }
+
+    request = urllib.request.Request(
+        endpoint,
+        data=json.dumps(request_body).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=config["timeout"]) as response:
+            response_data = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, json.JSONDecodeError, TimeoutError) as error:
+        return None, f"error:{error!r}"
+
+    choices = response_data.get("choices") if isinstance(response_data, dict) else None
+    if not isinstance(choices, list) or not choices:
+        return None, "error:invalid-response"
+
+    message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
+    content = message.get("content") if isinstance(message, dict) else None
+    if not isinstance(content, str) or not content.strip():
+        return None, "error:empty-content"
+
+    payload = _extract_json_block(content.strip())
+    if not payload:
+        return None, "error:non-json-content"
+
+    try:
+        parsed = json.loads(payload)
+    except json.JSONDecodeError as error:
+        return None, f"error:invalid-json:{error}"
+
+    if not isinstance(parsed, dict):
+        return None, "error:not-object"
+    return parsed, str(config["model"])
 
 
 def _build_openai_prompt(plan: Dict[str, Any], audience: str) -> str:
@@ -269,6 +352,95 @@ def _call_openai_for_explain(payload: Dict[str, Any], audience: str) -> tuple[st
 def assess(payload: AssessInput) -> AssessOutput:
     risk_score, triggers, readiness, confidence, assumptions, missing = compute_risk_and_readiness(payload)
 
+    llm_assumptions: List[str] = []
+    llm_missing: List[str] = []
+    if not _llm_disabled_for("ASSESS") and isinstance(_openai_api_key(), str):
+        baseline = {
+            "risk_score": risk_score,
+            "readiness_scores": {
+                "warning": readiness.warning,
+                "logistics": readiness.logistics,
+                "vulnerable_care": readiness.vulnerable_care,
+                "comms": readiness.comms,
+                "drills": readiness.drills,
+            },
+            "triggers": [trigger.dict() for trigger in triggers],
+            "assumptions": assumptions,
+            "missing_data": missing,
+            "confidence": confidence,
+            "scenario": payload.neighborhood_profile.name,
+            "forecast": {
+                "rainfall_mm": payload.forecast_summary.rainfall_mm,
+                "tide_level_m": payload.forecast_summary.tide_level_m,
+                "river_level_m": payload.forecast_summary.river_level_m,
+                "alerts": payload.forecast_summary.alerts,
+                "complaint_count": payload.forecast_summary.complaint_count,
+            },
+        }
+        baseline_json = json.dumps(baseline, ensure_ascii=False)
+        llm_prompt = (
+            "Return strict JSON only. You are improving a flood-risk payload.\n"
+            "Output JSON with optional keys:\n"
+            "- risk_score (int 0-100)\n"
+            "- readiness_scores ({warning,logistics,vulnerable_care,comms,drills} int 0-100)\n"
+            "- confidence (float 0-1)\n"
+            "- extra_hazard_triggers (array up to 2 of {name,score,reason})\n"
+            "- assumptions (array of strings)\n"
+            "- missing_data (array of strings)\n\n"
+            "Keep recommendations conservative and numeric bounds only.\n\n"
+            f"Baseline payload JSON:\n{baseline_json}\n"
+        )
+
+        llm_payload, llm_model = _call_openai_for_json(llm_prompt, max_tokens=260)
+        if llm_payload:
+            llm_assumptions.append(f"LLM assess refinement applied by {llm_model}.")
+            if "risk_score" in llm_payload:
+                risk_score = _safe_int(
+                    float(llm_payload.get("risk_score")),
+                    0,
+                    100,
+                )
+            if "confidence" in llm_payload:
+                confidence = _safe01(float(llm_payload.get("confidence")))
+            updated_readiness = llm_payload.get("readiness_scores")
+            if isinstance(updated_readiness, dict):
+                readiness = readiness.model_copy(
+                    update={
+                        "warning": _safe_int(float(updated_readiness.get("warning", readiness.warning)), 0, 100),
+                        "logistics": _safe_int(float(updated_readiness.get("logistics", readiness.logistics)), 0, 100),
+                        "vulnerable_care": _safe_int(float(updated_readiness.get("vulnerable_care", readiness.vulnerable_care)), 0, 100),
+                        "comms": _safe_int(float(updated_readiness.get("comms", readiness.comms)), 0, 100),
+                        "drills": _safe_int(float(updated_readiness.get("drills", readiness.drills)), 0, 100),
+                    }
+                )
+            if isinstance(llm_payload.get("extra_hazard_triggers"), list):
+                for item in llm_payload["extra_hazard_triggers"]:
+                    if not isinstance(item, dict):
+                        continue
+                    name = str(item.get("name", "")).strip()
+                    reason = str(item.get("reason", "")).strip()
+                    if not name or not reason:
+                        continue
+                    score = item.get("score", 0.0)
+                    try:
+                        score_value = _safe01(float(score))
+                    except (TypeError, ValueError):
+                        continue
+                    triggers.append(HazardTrigger(name=name, score=score_value, reason=reason))
+                if triggers:
+                    triggers = sorted(triggers, key=lambda trigger: trigger.score, reverse=True)[:5]
+            if isinstance(llm_payload.get("assumptions"), list):
+                for item in llm_payload["assumptions"]:
+                    if isinstance(item, str):
+                        llm_assumptions.append(item)
+            if isinstance(llm_payload.get("missing_data"), list):
+                for item in llm_payload["missing_data"]:
+                    if isinstance(item, str):
+                        llm_missing.append(item)
+        else:
+            llm_assumptions.append("LLM assess refinement failed; using deterministic baseline.")
+            llm_missing.append("LLM assess unavailable")
+
     if len(triggers) < 5:
         filler = [
             HazardTrigger(name="data_gap", score=0.0, reason="Not enough feed data to generate more triggers."),
@@ -299,14 +471,19 @@ def assess(payload: AssessInput) -> AssessOutput:
         ],
     )
 
+    assumptions.extend(llm_assumptions)
+    missing.extend(llm_missing)
+    if _llm_disabled_for("ASSESS"):
+        assumptions.append("OPENAI assess path disabled; deterministic baseline used.")
+
     return AssessOutput(
         risk_score=risk_score,
         top_hazard_triggers=triggers[:5],
         readiness_scores=readiness,
         readiness_gap=", ".join(readiness_gap) if readiness_gap else None,
         assumptions=assumptions,
-        council_review=council,
         confidence=confidence,
+        council_review=council,
         evidence_references=_merge_evidence(
             payload.neighborhood_profile.name,
             payload.forecast_summary.alerts,
@@ -483,6 +660,100 @@ def plan(payload: PlanInput) -> PlanOutput:
         recommendations=scores,
     )
 
+    llm_assumptions: List[str] = []
+    llm_missing: List[str] = []
+    assessed_risk = payload.assessed_risk
+    actionability_minutes = 20
+    if not _llm_disabled_for("PLAN") and isinstance(_openai_api_key(), str):
+        baseline = {
+            "assessed_risk": assessed_risk,
+            "time_horizon_plan": {
+                horizon: [action.model_dump() for action in actions]
+                for horizon, actions in actions_by_horizon.items()
+            },
+            "resource_inventory": payload.resources.dict(),
+            "location": payload.location,
+            "scenario": payload.target_zones,
+        }
+        llm_prompt = (
+            "Return strict JSON only for plan refinement.\n"
+            "Output JSON with optional keys:\n"
+            "- assessed_risk (int 0-100)\n"
+            "- action_overrides (array of objects: index, priority?, horizon?, eta_minutes?)\n"
+            "- actionability_minutes (int)\n"
+            "- assumptions (array strings)\n"
+            "- missing_data (array strings)\n"
+            "Indexes refer to flattened action order in the baseline list: 24h actions, then 6h, then 1h.\n\n"
+            f"Baseline payload JSON:\n{json.dumps(baseline, ensure_ascii=False)}\n"
+        )
+        llm_payload, llm_model = _call_openai_for_json(llm_prompt, max_tokens=320)
+        if llm_payload:
+            llm_assumptions.append(f"LLM plan refinement applied by {llm_model}.")
+            if "assessed_risk" in llm_payload:
+                assessed_risk = _safe_int(
+                    float(llm_payload.get("assessed_risk")),
+                    0,
+                    100,
+                )
+                council = build_council_review(
+                    command_name="plan",
+                    assessed_risk=assessed_risk,
+                    readiness_scores=None,
+                    recommendations=scores,
+                )
+
+            if "actionability_minutes" in llm_payload:
+                actionability_minutes = _safe_int(float(llm_payload.get("actionability_minutes")), 1, 240)
+
+            overrides = llm_payload.get("action_overrides")
+            if isinstance(overrides, list):
+                for override in overrides:
+                    if not isinstance(override, dict):
+                        continue
+                    idx = override.get("index")
+                    if not isinstance(idx, int):
+                        try:
+                            idx = int(str(idx))
+                        except (TypeError, ValueError):
+                            continue
+                    if idx < 0 or idx >= len(flat_actions):
+                        continue
+
+                    updated = {}
+                    if "priority" in override:
+                        try:
+                            updated["priority"] = _safe_int(float(override.get("priority")), 1, 5)
+                        except (TypeError, ValueError):
+                            pass
+                    if "eta_minutes" in override:
+                        try:
+                            updated["eta_minutes"] = _safe_int(float(override.get("eta_minutes")), 0, 240)
+                        except (TypeError, ValueError):
+                            pass
+                    if "targets_vulnerable" in override:
+                        updated["targets_vulnerable"] = bool(override.get("targets_vulnerable"))
+                    if updated:
+                        flat_actions[idx] = flat_actions[idx].model_copy(update=updated)
+
+            if isinstance(llm_payload.get("assumptions"), list):
+                for item in llm_payload["assumptions"]:
+                    if isinstance(item, str):
+                        llm_assumptions.append(item)
+            if isinstance(llm_payload.get("missing_data"), list):
+                for item in llm_payload["missing_data"]:
+                    if isinstance(item, str):
+                        llm_missing.append(item)
+        else:
+            llm_assumptions.append("LLM plan refinement failed; using deterministic baseline.")
+            llm_missing.append("LLM plan unavailable")
+
+    updated_time_horizon = {"24h": [], "6h": [], "1h": []}
+    for action in flat_actions:
+        if action.horizon in updated_time_horizon:
+            updated_time_horizon[action.horizon].append(action)
+    for horizon, actions in updated_time_horizon.items():
+        updated_time_horizon[horizon] = sorted(actions, key=lambda action: (action.priority, action.eta_minutes))
+
     fallback_routes, shelter_suggestions = _extract_routes_and_shelters(payload)
 
     materials_checklist = [
@@ -495,32 +766,36 @@ def plan(payload: PlanInput) -> PlanOutput:
         "evacuation map printouts",
     ]
 
-    matrix = _build_matrix(flat_actions)
+    matrix = _build_matrix([item for _horizon, items in updated_time_horizon.items() for item in items])
 
     assumptions: List[str] = []
     missing: List[str] = []
     if resource_count < 5:
         missing.append("resource inventory completeness")
         assumptions.append("Inventory is thin; fallback operational assets are assumed and logged.)")
+    assumptions.extend(llm_assumptions)
+    missing.extend(llm_missing)
+    if _llm_disabled_for("PLAN"):
+        assumptions.append("OPENAI plan path disabled; deterministic baseline used.")
 
     confidence = 0.86 if resource_count >= 5 else 0.7
 
     return PlanOutput(
-        assessed_risk=payload.assessed_risk,
-        time_horizon_plan=actions_by_horizon,
+        assessed_risk=assessed_risk,
+        time_horizon_plan=updated_time_horizon,
         task_assignment_matrix=matrix,
         fallback_routes=fallback_routes,
         shelter_suggestions=shelter_suggestions,
         materials_checklist=materials_checklist,
         council_review=council,
-        confidence=confidence,
+        confidence=min(1.0, max(0.1, confidence + 0.02 if llm_assumptions else 0.0)),
         evidence_references=_merge_evidence(
             payload.location,
             payload.assessed_risk,
             payload.resources,
         ),
         actionability=_build_actionability(
-            minutes=20,
+            minutes=actionability_minutes,
             assumptions=assumptions,
             missing=missing,
             owner="incident_commander",
