@@ -137,7 +137,7 @@ if output="$(run_cli_or_hint "${CLI_BIN}" assess --format xml 2>&1)"; then
   log "${output}"
   FAIL_COUNT=$((FAIL_COUNT + 1))
 else
-  if echo "${output}" | grep -q "Invalid value: format must be json or markdown"; then
+  if echo "${output}" | grep -q "Invalid value: format must be"; then
     log "PASS: clean validation error observed"
   else
     log "WARN: expected error text not found"

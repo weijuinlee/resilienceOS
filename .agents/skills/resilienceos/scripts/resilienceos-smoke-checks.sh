@@ -28,7 +28,7 @@ run_expect_fail() {
     echo "FAIL: command unexpectedly succeeded"
     echo "${output}"
     return 1
-  elif echo "${output}" | grep -q "Invalid value: format must be json or markdown"; then
+  elif echo "${output}" | grep -q "Invalid value: format must be"; then
     echo "PASS: clean validation error observed"
     echo "${output}"
     return 0
@@ -44,6 +44,8 @@ cd "${REPO_ROOT}"
 run_ok "resilienceos assess (JSON)" assess --scenario singapore --format json
 run_ok "resilienceos plan (JSON)" plan --scenario singapore --assessed-risk 90 --format json
 run_ok "resilienceos agent (JSON + optional modules)" agent --scenario singapore --include-inbox --include-simulate --format json
+run_ok "resilienceos assess (concise_brief)" assess --scenario singapore --format concise_brief
+run_ok "resilienceos plan (concise_brief)" plan --scenario singapore --assessed-risk 90 --format concise_brief
 run_ok "resilienceos assess fixture input (JSON)" assess --input fixtures/scenario_singapore_coastal.json --format json
 run_expect_fail "resilienceos assess invalid format" assess --format xml
 

@@ -9,6 +9,9 @@ DEMO_SCENARIO ?= singapore
 DEMO_INCLUDE_INBOX ?= true
 DEMO_INCLUDE_SIMULATE ?= true
 DEMO_ASSESSED_RISK ?= 90
+DEMO_SHOW_CONCISE_BRIEF ?= 1
+DEMO_SHOW_RAW_JSON ?= 1
+DEMO_SHOW_RATIONALE ?= 1
 DEMO_SCREENSHOT ?= outputs/resilienceos-dashboard-demo.png
 DEMO_PORT ?= 8501
 DEMO_PRESET ?= scripts/demo-presets/judge.env
@@ -29,7 +32,7 @@ help:
 	@echo "  smoke-input    - run fixture file smoke check"
 	@echo "  ui             - launch Streamlit dashboard (installs streamlit if missing in venv)"
 	@echo "  demo-ui        - launch one-click Streamlit judge demo with preloaded command/scenario"
-	@echo "  demo-local     - one-click judge preset demo (no env vars needed)"
+	@echo "  demo-local     - one-click judge preset demo (concise-brief + raw JSON by default)"
 	@echo "  demo-local-shot - one-click judge preset screenshot capture (requires Playwright)"
 	@echo "  demo-local-judge - explicit one-click judge preset run"
 	@echo "  demo-local-highrisk - one-click high-risk preset demo"
@@ -92,7 +95,11 @@ smoke-fast:
 		fi; \
 	}; \
 	run_view "Assess" ".risk_score, .readiness_scores" assess --scenario "$${SCENARIO_NAME}" ; \
+	echo "==== Assess (concise brief) ====" | tee -a "$$LOG_FILE"; \
+	"$$CLI" assess --scenario "$${SCENARIO_NAME}" --format concise_brief | tee -a "$$LOG_FILE"; \
 	run_view "Plan 6h+" ".time_horizon_plan[\"6h\"], .task_assignment_matrix[:2]" plan --scenario "$${SCENARIO_NAME}" --assessed-risk 90; \
+	echo "==== Plan (concise brief) ====" | tee -a "$$LOG_FILE"; \
+	"$$CLI" plan --scenario "$${SCENARIO_NAME}" --assessed-risk 90 --format concise_brief | tee -a "$$LOG_FILE"; \
 	run_view "Agent focus" ".scenario, .immediate_actions, .watchlist" agent --scenario "$${SCENARIO_NAME}" --include-inbox --include-simulate; \
 	run_view "Explain" ".plain_language_rationale" explain --scenario "$${SCENARIO_NAME}"; \
 	if "$$CLI" assess --format xml >/tmp/smoke-fast-xml-$${TIMESTAMP}.txt 2>&1; then \
@@ -124,6 +131,9 @@ demo-ui:
 	DEMO_INCLUDE_INBOX=$(DEMO_INCLUDE_INBOX) \
 	DEMO_INCLUDE_SIMULATE=$(DEMO_INCLUDE_SIMULATE) \
 	DEMO_ASSESSED_RISK=$(DEMO_ASSESSED_RISK) \
+	DEMO_SHOW_CONCISE_BRIEF=$(DEMO_SHOW_CONCISE_BRIEF) \
+	DEMO_SHOW_RAW_JSON=$(DEMO_SHOW_RAW_JSON) \
+	DEMO_SHOW_RATIONALE=$(DEMO_SHOW_RATIONALE) \
 	DEMO_PORT=$(DEMO_PORT) \
 	VENV_BIN=$(VENV_BIN) \
 	bash scripts/resilienceos-demo-ui.sh
@@ -134,6 +144,9 @@ demo-shot:
 	DEMO_INCLUDE_INBOX=$(DEMO_INCLUDE_INBOX) \
 	DEMO_INCLUDE_SIMULATE=$(DEMO_INCLUDE_SIMULATE) \
 	DEMO_ASSESSED_RISK=$(DEMO_ASSESSED_RISK) \
+	DEMO_SHOW_CONCISE_BRIEF=$(DEMO_SHOW_CONCISE_BRIEF) \
+	DEMO_SHOW_RAW_JSON=$(DEMO_SHOW_RAW_JSON) \
+	DEMO_SHOW_RATIONALE=$(DEMO_SHOW_RATIONALE) \
 	DEMO_PORT=$(DEMO_PORT) \
 	DEMO_SCREENSHOT=$(DEMO_SCREENSHOT) \
 	VENV_BIN=$(VENV_BIN) \

@@ -2,7 +2,7 @@
 
 resilienceOS is a production-ready **AI resilience agent** for neighborhood flood preparedness.
 All commands emit **JSON by default** for automation and orchestrator parsing.
-Use `--format markdown` only when you want a human-readable summary.
+Use `--format markdown` for a rendered summary or `--format concise_brief` for a compact, judge-friendly "what should I do now" summary.
 
 It is built for one-person, demo-ready deployments and runs locally first with deterministic outputs.
 
@@ -66,6 +66,7 @@ python3 -m pip install -e . --no-build-isolation --no-deps || python3 setup.py d
 resilienceos assess --scenario singapore --format json
 resilienceos agent --scenario singapore --include-inbox --include-simulate --format json
 resilienceos plan --scenario singapore --format markdown
+resilienceos plan --scenario singapore --format concise_brief
 resilienceos drill --scenario singapore
 resilienceos inbox --scenario singapore
 resilienceos explain --scenario singapore
@@ -100,6 +101,7 @@ resilienceos assess --scenario singapore --format json | jq '.risk_score, .readi
 resilienceos plan --scenario singapore --assessed-risk 90 --format json | jq '.time_horizon_plan["6h"], .task_assignment_matrix[:2]'
 resilienceos agent --scenario singapore --include-inbox --include-simulate --format json | jq '.scenario, .immediate_actions, .watchlist'
 resilienceos explain --scenario singapore --format json | jq '.plain_language_rationale'
+resilienceos plan --scenario singapore --assessed-risk 90 --format concise_brief
 resilienceos assess --format xml
 ```
 
@@ -127,6 +129,7 @@ The dashboard lets you:
 - run scenarios from built-in fixtures or a local JSON file
 - pass plan/agent risk overrides and optional inbox/simulate modules
 - inspect rendered summaries and raw JSON payloads instantly
+- the judge preset shows both concise brief rationale and machine JSON together
 
 If `streamlit` is not already in your venv, `make ui` installs it first.
 
@@ -184,6 +187,10 @@ Output notes for judges:
 - `agent` includes integrated assess/plan/inbox/simulate coordination.
 - `explain` returns `plain_language_rationale` (human-readable explanation field).
 - invalid `--format xml` fails fast with a clear validation error.
+
+Judge-facing CLI mode:
+- `--format concise_brief` gives a short, high-signal text summary
+- "Why this order?" bullets are drawn from top council-review rationale scores
 
 ## Codex Skill plugin registration
 

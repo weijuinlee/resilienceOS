@@ -340,6 +340,10 @@ if command == "agent":
         value=_query_flag("include_simulate", preset_defaults["include_simulate"] == "true"),
     )
 
+show_concise_brief = _query_flag("show_concise_brief", True)
+show_raw_json = _query_flag("show_raw_json", True)
+show_rationale = _query_flag("show_rationale", True)
+
 run_label = f"Run {command.title()}"
 auto_run = _query_flag("autostart", False)
 
@@ -410,21 +414,26 @@ if should_run:
             for item in payload["immediate_actions"]:
                 st.write(f"- {item}")
 
-        st.subheader("Why this order?")
-        rationale_bullets = _collect_council_bullets(payload, limit=3)
-        if rationale_bullets:
-            for item in rationale_bullets:
-                st.write(f"- {item}")
-        else:
-            st.info("No rationale bullets available.")
+        if show_rationale:
+            st.subheader("Why this order?")
+            rationale_bullets = _collect_council_bullets(payload, limit=3)
+            if rationale_bullets:
+                for item in rationale_bullets:
+                    st.write(f"- {item}")
+            else:
+                st.info("No rationale bullets available.")
 
-        concise_lines = _explain_text(payload)
-        if concise_lines:
+        if show_concise_brief:
             st.subheader("Concise brief")
-            st.write(concise_lines)
+            concise_lines = _explain_text(payload)
+            if concise_lines:
+                st.write(concise_lines)
+            else:
+                st.info("Concise brief not available for this payload.")
 
-        with st.expander("Raw JSON payload"):
-            st.json(payload)
+        if show_raw_json:
+            with st.expander("Machine-readable JSON output"):
+                st.json(payload)
 
         if "incident_clusters" in payload:
             st.write("### Incident clusters")

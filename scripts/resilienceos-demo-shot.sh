@@ -11,6 +11,9 @@ set -euo pipefail
 : "${DEMO_OVERRIDE_RISK:=true}"
 : "${DEMO_SCREENSHOT:=outputs/resilienceos-dashboard-demo.png}"
 : "${DEMO_PRESET_NAME:=}"
+: "${DEMO_SHOW_CONCISE_BRIEF:=1}"
+: "${DEMO_SHOW_RAW_JSON:=1}"
+: "${DEMO_SHOW_RATIONALE:=1}"
 DEMO_ORIG_PORT="${DEMO_PORT}"
 
 DEMO_PORT="$(
@@ -61,8 +64,9 @@ DEMO_PRESET_PARAM=""
 if [ -n "${DEMO_PRESET_NAME}" ]; then
   DEMO_PRESET_PARAM="&preset=${DEMO_PRESET_NAME}"
 fi
+DEMO_VISUAL_PARAMS="show_concise_brief=${DEMO_SHOW_CONCISE_BRIEF}&show_raw_json=${DEMO_SHOW_RAW_JSON}&show_rationale=${DEMO_SHOW_RATIONALE}"
 
-DEMO_URL="http://127.0.0.1:${DEMO_PORT}/?command=${DEMO_COMMAND}&scenario=${DEMO_SCENARIO}&include_inbox=${DEMO_INCLUDE_INBOX}&include_simulate=${DEMO_INCLUDE_SIMULATE}&autostart=1&${DEMO_OVERRIDE_PARAM}${DEMO_PRESET_PARAM}"
+DEMO_URL="http://127.0.0.1:${DEMO_PORT}/?command=${DEMO_COMMAND}&scenario=${DEMO_SCENARIO}&include_inbox=${DEMO_INCLUDE_INBOX}&include_simulate=${DEMO_INCLUDE_SIMULATE}&autostart=1&${DEMO_OVERRIDE_PARAM}&${DEMO_VISUAL_PARAMS}${DEMO_PRESET_PARAM}"
 export DEMO_URL
 
 (

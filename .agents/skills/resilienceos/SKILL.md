@@ -52,8 +52,9 @@ Use this skill when the task is about:
 
 ## Output Expectations
 - Primary output is JSON by default.
-- Markdown output is only via `--format markdown`.
-- `--format xml` must fail cleanly with `Invalid value: format must be json or markdown`.
+- Markdown output is available via `--format markdown`.
+- Concise human-readable judge summary is available via `--format concise_brief`.
+- `--format xml` must fail cleanly with `Invalid value: format must ...`.
 - Healthcheck writes a timestamped log file under `outputs/`.
 
 ## Verification Notes
