@@ -23,7 +23,6 @@ FIXTURE_DIR = _find_fixture_dir()
 SCENARIOS = {
     "singapore": "scenario_singapore_coastal.json",
     "bali": "scenario_bali_like.json",
-    "riverfront": "scenario_riverfront.json",
 }
 
 
