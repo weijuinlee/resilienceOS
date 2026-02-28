@@ -1,23 +1,46 @@
 # Install and run resilienceOS
 
-1. Create and activate a Python environment (optional but recommended)
+1. Create and activate a writable Python environment (recommended).
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
 2. Install package in editable mode:
 
 ```bash
-pip install -e .
+python3 -m pip install -e . --no-build-isolation --no-deps
 ```
 
-3. Run with a default fixture (JSON is default output):
+If your environment has reliable internet, you can omit `--no-build-isolation`:
 
 ```bash
-resilienceos assess --scenario singapore
-resilienceos plan --scenario singapore
-resilienceos drill --scenario singapore
-resilienceos simulate --scenario singapore
+python3 -m pip install -e .
 ```
 
-Use `--format markdown` for a concise human-readable brief.
+3. Run the default JSON smoke check:
 
-JSON-first usage:
-- Omit `--format` or use `--format json` for machine-parsing pipelines.
-- Use `--format markdown` when you need a human-readable report only.
+```bash
+resilienceos assess --scenario singapore --format json
+resilienceos plan --scenario singapore --assessed-risk 90 --format json
+```
+
+JSON-first behavior:
+- JSON is default: `--format json`
+- Markdown remains opt-in: `--format markdown`
+
+If installation fails or `resilienceos` command is not on PATH, run directly from the
+repository:
+
+```bash
+PYTHONPATH=src python3 -m resilienceos.cli assess --scenario singapore --format json
+PYTHONPATH=src python3 -m resilienceos.cli plan --scenario singapore --assessed-risk 90 --format json
+PYTHONPATH=src python3 -m resilienceos.cli assess --format xml
+```
+
+If you want fixtures outside the current directory:
+
+```bash
+PYTHONPATH=src python3 -m resilienceos.cli assess --input fixtures/scenario_singapore_coastal.json --format json
+```

@@ -97,7 +97,7 @@ def compute_risk_and_readiness(payload: AssessInput) -> Tuple[int, List[HazardTr
     top_five = top_triggers[:5]
 
     comm_infra = [item for item in infra if item.type.lower() in {"siren", "radio", "sms_gateway", "public_alert", "community_hub"}]
-    warning_score = int(round(100 * min(1.0, 0.25 + 0.25 * len(comm_infra) + 0.15 * (1 - rain_score))))
+    warning_score = int(round(100 * min(1.0, 0.25 + 0.25 * len(comm_infra) + 0.15 * (1 - rainfall_score))))
 
     evac_infra = [item for item in infra if item.supports_evacuation]
     logistics_score = int(round(100 * min(1.0, 0.35 + 0.2 * len(evac_infra) + 0.45 * (_clamp01(profile.total_households / 800.0)))))

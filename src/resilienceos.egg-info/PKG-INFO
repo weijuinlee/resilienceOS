@@ -1,3 +1,15 @@
+Metadata-Version: 2.4
+Name: resilienceos
+Version: 0.1.0
+Summary: AI resilience agent for neighborhood environmental crisis preparedness
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: typer>=0.12
+Requires-Dist: pydantic>=2.8
+Requires-Dist: jinja2>=3.1
+Dynamic: license-file
+
 # resilienceOS
 
 resilienceOS is a production-ready **Codex Skill plugin** for neighborhood flood preparedness.
@@ -61,22 +73,13 @@ Hook points for API sources are in `src/resilienceos/utils.py` (`load_input`) an
 ## Running
 
 ```bash
-python3 -m pip install -e . --no-build-isolation
-resilienceos assess --scenario singapore --format json
+pip install -e .
+resilienceos assess --scenario singapore
 resilienceos plan --scenario singapore --format markdown
 resilienceos drill --scenario singapore
 resilienceos inbox --scenario singapore
 resilienceos explain --scenario singapore
 resilienceos simulate --scenario singapore
-```
-
-If installation is blocked by permissions, run from repository checkout without
-installing:
-
-```bash
-PYTHONPATH=src python3 -m resilienceos.cli assess --scenario singapore --format json
-PYTHONPATH=src python3 -m resilienceos.cli assess --scenario singapore --input fixtures/scenario_singapore_coastal.json --format json
-PYTHONPATH=src python3 -m resilienceos.cli assess --format xml
 ```
 
 ### Sample one-command demo path

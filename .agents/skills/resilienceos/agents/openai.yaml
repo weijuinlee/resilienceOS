@@ -1,0 +1,4 @@
+interface:
+  display_name: "ResilienceOS"
+  short_description: "Validate and run the resilienceOS Codex skill commands."
+  default_prompt: "Use this skill when validating install/discovery and running resilienceOS CLI smoke checks."

@@ -3,8 +3,22 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-ROOT_DIR = Path(__file__).resolve().parents[1]
-FIXTURE_DIR = ROOT_DIR / "fixtures"
+
+def _find_fixture_dir() -> Path:
+    package_dir = Path(__file__).resolve().parent
+    candidates = [
+        package_dir.parent / "fixtures",     # Editable/package layout: src/fixtures
+        package_dir.parents[1] / "fixtures", # Repo layout: ../fixtures from src/resilienceos
+        Path.cwd() / "fixtures",             # When running from repository root
+    ]
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    # Preserve historical behavior as fallback.
+    return package_dir.parent / "fixtures"
+
+
+FIXTURE_DIR = _find_fixture_dir()
 
 SCENARIOS = {
     "singapore": "scenario_singapore_coastal.json",
@@ -62,4 +76,3 @@ def write_output(path: str | None, payload_obj):
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(payload_obj.model_dump_json(indent=2), encoding="utf-8")
-
