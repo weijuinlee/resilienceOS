@@ -62,7 +62,7 @@ Hook points for API sources are in `src/resilienceos/utils.py` (`load_input`) an
 ## Running
 
 ```bash
-python3 -m pip install -e . --no-build-isolation
+python3 -m pip install -e . --no-build-isolation --no-deps || python3 setup.py develop
 resilienceos assess --scenario singapore --format json
 resilienceos agent --scenario singapore --include-inbox --include-simulate --format json
 resilienceos plan --scenario singapore --format markdown
@@ -91,6 +91,31 @@ resilienceos simulate --scenario singapore --output outputs/simulate_singapore.j
 
 A full run typically finishes well under 60 seconds for small fixture payloads.
 
+### 2-minute hackathon demo
+
+Use this sequence for a short, repeatable demo:
+
+```bash
+resilienceos assess --scenario singapore --format json | jq '.risk_score, .readiness_scores'
+resilienceos plan --scenario singapore --assessed-risk 90 --format json | jq '.time_horizon_plan["6h"], .task_assignment_matrix[:2]'
+resilienceos agent --scenario singapore --include-inbox --include-simulate --format json | jq '.scenario, .immediate_actions, .watchlist'
+resilienceos explain --scenario singapore --format json | jq '.plain_language_rationale'
+resilienceos assess --format xml
+```
+
+Or run the exact same flow via Makefile:
+
+```bash
+make smoke-fast
+```
+
+Output notes for judges:
+- `assess` returns a machine-readable readiness/risk payload.
+- `plan` returns a priority action plan by horizon.
+- `agent` includes integrated assess/plan/inbox/simulate coordination.
+- `explain` returns `plain_language_rationale` (human-readable explanation field).
+- invalid `--format xml` fails fast with a clear validation error.
+
 ## Codex Skill plugin registration
 
 To make this discoverable as a Codex skill, install this repository folder under your
@@ -105,6 +130,30 @@ When Codex loads skills from filesystem manifests, it scans:
 - `resilienceos.skill.json` at the plugin root
 - optional `.agents/...` metadata for UI/runtime display
 
+### Publish/distribution (GitHub + skill-installer)
+
+For marketplace-style sharing:
+
+1. Push this repository to GitHub.
+2. In downstream environments, install from repo:
+
+```bash
+git clone <https://github.com/<org>/<repo>.git>
+cd <repo>
+python3 -m venv --system-site-packages .venv
+source .venv/bin/activate
+make install-offline
+make codex-link
+```
+
+Or, when `skill-installer` is available in the user environment:
+
+```bash
+skill-installer install <https://github.com/<org>/<repo>.git>
+```
+
+After install, restart Codex and verify `resilienceOS` appears in the skill list.
+
 ## Release/build helpers
 
 Use `make` for repeatable checks:
@@ -112,6 +161,7 @@ Use `make` for repeatable checks:
 ```bash
 make install              # creates .venv and installs editable
 make smoke                # JSON smoke checks via direct PYTHONPATH fallback
+make smoke-fast           # 2-minute judge-friendly demo with expected validation failure
 make smoke-installed      # JSON smoke checks via installed CLI (if install succeeds)
 make smoke-fail           # expected validation-failure path for invalid format
 make codex-link           # register this repo in ~/.codex/skills

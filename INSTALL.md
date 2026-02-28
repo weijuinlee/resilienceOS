@@ -12,13 +12,13 @@ For offline or restricted-network environments, use the following one-shot flow:
 ```bash
 python3 -m venv --system-site-packages .venv
 source .venv/bin/activate
-python3 -m pip install -e . --no-build-isolation --no-deps
+python3 -m pip install -e . --no-build-isolation --no-deps || python3 setup.py develop
 ```
 
 2. Install package in editable mode:
 
 ```bash
-python3 -m pip install -e . --no-build-isolation --no-deps
+python3 -m pip install -e . --no-build-isolation --no-deps || python3 setup.py develop
 ```
 
 If your environment has reliable internet, you can omit `--no-build-isolation`:
@@ -66,6 +66,26 @@ Restart Codex (or the current Codex client/session) and verify that `resilienceO
 appears in the skill list. This repo exposes:
 - `resilienceos.skill.json` for schema/command discovery
 - `.agents/skills/resilienceos/SKILL.md` for Codex UI/runtime metadata
+
+## Publish/distribution (GitHub + skill-installer)
+
+1. Push this repository to GitHub (public or internal).
+2. For users with repo access:
+
+```bash
+git clone <https://github.com/<org>/<repo>.git>
+cd <repo>
+python3 -m venv --system-site-packages .venv
+source .venv/bin/activate
+make install-offline
+make codex-link
+```
+
+3. If `skill-installer` is enabled in your environment:
+
+```bash
+skill-installer install <https://github.com/<org>/<repo>.git>
+```
 
 ## Make targets
 
