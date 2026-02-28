@@ -258,3 +258,17 @@ class SimulateOutput(BaseOutput):
     recommended_preemptive_actions: List[PlanAction]
     first_60_minute_actions: List[PlanAction]
     council_review: CouncilReview
+
+
+class AgentOutput(BaseOutput):
+    scenario: str
+    mission: str
+    included_modules: List[str]
+    assessed_risk: int = Field(..., ge=0, le=100)
+    readiness_gap: Optional[str]
+    immediate_actions: List[str] = Field(default_factory=list)
+    watchlist: List[str] = Field(default_factory=list)
+    assess: AssessOutput
+    plan: PlanOutput
+    inbox: Optional[InboxOutput] = None
+    simulate: Optional[SimulateOutput] = None

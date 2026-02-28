@@ -86,6 +86,56 @@
       ]
     },
     {
+      "name": "agent",
+      "description": "Run an adaptive resilience workflow: assess + plan plus optional inbox and simulation modules.",
+      "arguments": [
+        {
+          "name": "input",
+          "type": "string",
+          "description": "Path to JSON input payload used across workflow modules.",
+          "required": false
+        },
+        {
+          "name": "scenario",
+          "type": "string",
+          "description": "Built-in scenario key.",
+          "required": false,
+          "default": "singapore"
+        },
+        {
+          "name": "include_inbox",
+          "type": "boolean",
+          "description": "Run inbox triage as part of the bundle.",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "include_simulate",
+          "type": "boolean",
+          "description": "Run simulation module as part of the bundle.",
+          "required": false,
+          "default": false
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "description": "Path to save output JSON.",
+          "required": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "Output format.",
+          "required": false,
+          "default": "json",
+          "choices": [
+            "json",
+            "markdown"
+          ]
+        }
+      ]
+    },
+    {
       "name": "drill",
       "description": "Evaluate drill compliance, missed steps, and produce a corrected template.",
       "arguments": [

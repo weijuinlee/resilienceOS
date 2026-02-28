@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -7,21 +8,36 @@ import typer
 
 from . import engine
 from .markdown_render import render
-from .models import AssessInput, DrillInput, ExplainInput, InboxInput, PlanInput, SimulateInput
+from .models import (
+    AgentOutput,
+    AssessInput,
+    DrillInput,
+    ExplainInput,
+    InboxInput,
+    PlanInput,
+    SimulateInput,
+)
 from .utils import PluginInputError, load_input
 
 app = typer.Typer(help="AI resilience agent for neighborhood environmental crisis preparedness")
 
 
+def _serialize_payload(payload) -> str:
+    if hasattr(payload, "model_dump"):
+        return payload.model_dump_json(indent=2)
+    return json.dumps(payload, indent=2, ensure_ascii=False)
+
+
 def _print(payload, command: str, output: Path | None, fmt: str):
+    payload_text = _serialize_payload(payload)
     if output:
         output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(payload.model_dump_json(indent=2), encoding="utf-8")
+        output.write_text(payload_text, encoding="utf-8")
 
     if fmt == "markdown":
         typer.echo(render(payload, command))
     else:
-        typer.echo(payload.model_dump_json(indent=2))
+        typer.echo(payload_text)
 
 
 @app.command()
@@ -149,6 +165,46 @@ def simulate(
     _print(result, "simulate", output, format)
 
 
+@app.command()
+def agent(
+    input_file: Optional[Path] = typer.Option(None, "--input", help="JSON payload for agent workflow."),
+    scenario: str = typer.Option("singapore", "--scenario", help="Built-in scenario key."),
+    include_inbox: bool = typer.Option(False, "--include-inbox", help="Include social signal triage in this run."),
+    include_simulate: bool = typer.Option(False, "--include-simulate", help="Include simulation impact run in this bundle."),
+    output: Optional[Path] = typer.Option(None, "--output", help="Save output JSON."),
+    format: str = typer.Option("json", "--format", help="json|markdown"),
+):
+    """Run an adaptive resilience agent pass across assess, plan, and optional monitors."""
+    if format not in {"json", "markdown"}:
+        raise typer.BadParameter("format must be json or markdown")
+
+    try:
+        assess_payload = load_input(str(input_file) if input_file else None, scenario, "assess")
+        plan_payload = load_input(str(input_file) if input_file else None, scenario, "plan")
+        assess_model = AssessInput.model_validate(assess_payload)
+        plan_model = PlanInput.model_validate(plan_payload)
+
+        inbox_model = None
+        if include_inbox:
+            inbox_payload = load_input(str(input_file) if input_file else None, scenario, "inbox")
+            inbox_model = InboxInput.model_validate(inbox_payload)
+
+        simulate_model = None
+        if include_simulate:
+            simulate_payload = load_input(str(input_file) if input_file else None, scenario, "simulate")
+            simulate_model = SimulateInput.model_validate(simulate_payload)
+
+        result: AgentOutput = engine.agent(
+            assess_model,
+            plan_model,
+            include_inbox=inbox_model,
+            include_simulate=simulate_model,
+        )
+    except PluginInputError as error:
+        raise typer.BadParameter(str(error))
+
+    _print(result, "agent", output, format)
+
+
 if __name__ == "__main__":
     app()
-

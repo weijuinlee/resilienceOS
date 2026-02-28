@@ -5,12 +5,14 @@ from typing import Any, Dict, List
 from .evaluation import build_council_review, score_recommendation
 from .models import (
     Actionability,
+    AgentOutput,
     AssessInput,
     AssessOutput,
     IncidentCard,
     EscalationDecision,
     DrillInput,
     DrillOutput,
+    BaseOutput,
     ExplainInput,
     ExplainOutput,
     HazardTrigger,
@@ -28,9 +30,15 @@ from .models import (
 from .risk import compute_risk_and_readiness
 
 
-def _build_actionability(minutes: int, assumptions: List[str], missing: List[str], owner: str = "local_coordination_team") -> Actionability:
+def _build_actionability(
+    minutes: int,
+    assumptions: List[str],
+    missing: List[str],
+    owner: str = "local_coordination_team",
+    can_run_offline: bool = True,
+) -> Actionability:
     return Actionability(
-        can_run_offline=True,
+        can_run_offline=can_run_offline,
         estimated_minutes_to_act=minutes,
         assumptions=assumptions,
         missing_data=missing,
@@ -638,11 +646,129 @@ def simulate(payload: SimulateInput) -> SimulateOutput:
         first_60_minute_actions=first_60,
         council_review=council,
         confidence=0.78,
-        evidence_references=[payload.scenario_name, payload.forecast_summary.alerts],
+        evidence_references=_merge_evidence(
+            payload.scenario_name,
+            payload.forecast_summary.alerts,
+        ),
         actionability=_build_actionability(
             minutes=30,
             assumptions=["Simulation assumes linear runoff and no second-event peak in first 6h."],
             missing=["building-level flooding model calibration"],
             owner="simulation_owner",
         ),
+    )
+
+
+def _combine_actionability(outputs: List[BaseOutput]) -> Actionability:
+    actionabilities = [output.actionability for output in outputs if output is not None]
+    if not actionabilities:
+        return _build_actionability(
+            minutes=20,
+            assumptions=["No concrete command output to combine."],
+            missing=["agent_inputs"],
+            owner="incident_commander",
+        )
+
+    assumptions: List[str] = []
+    missing: List[str] = []
+    minutes = max(item.estimated_minutes_to_act for item in actionabilities)
+    can_run_offline = all(item.can_run_offline for item in actionabilities)
+    owner = actionabilities[0].recommended_owner
+
+    for item in actionabilities:
+        assumptions.extend(item.assumptions)
+        missing.extend(item.missing_data)
+        if item.recommended_owner != owner:
+            owner = f"{owner}/{item.recommended_owner}"
+
+    assumption_seen = set()
+    assumptions = [x for x in assumptions if not (x in assumption_seen or assumption_seen.add(x))]
+
+    missing_seen = set()
+    missing = [x for x in missing if not (x in missing_seen or missing_seen.add(x))]
+
+    return _build_actionability(
+        minutes=minutes,
+        assumptions=assumptions,
+        missing=missing,
+        owner=owner,
+        can_run_offline=can_run_offline,
+    )
+
+
+def agent(
+    assess_payload: AssessInput,
+    plan_payload: PlanInput,
+    include_inbox: InboxInput | None = None,
+    include_simulate: SimulateInput | None = None,
+) -> AgentOutput:
+    assess_result = assess(assess_payload)
+    plan_result = plan(plan_payload)
+
+    included_modules = ["assess", "plan"]
+    inbox_result = None
+    simulate_result = None
+    actionability_sources = [assess_result, plan_result]
+
+    if include_inbox is not None:
+        included_modules.append("inbox")
+        inbox_result = inbox(include_inbox)
+        actionability_sources.append(inbox_result)
+
+    if include_simulate is not None:
+        included_modules.append("simulate")
+        simulate_result = simulate(include_simulate)
+        actionability_sources.append(simulate_result)
+
+    confidence = assess_result.confidence
+    if plan_result.confidence < confidence:
+        confidence = plan_result.confidence
+    if inbox_result and inbox_result.confidence < confidence:
+        confidence = inbox_result.confidence
+    if simulate_result and simulate_result.confidence < confidence:
+        confidence = simulate_result.confidence
+
+    immediate_actions = [
+        f"{item.owner}: {item.task} (ETA {item.eta_minutes}m)"
+        for item in sorted(plan_result.task_assignment_matrix, key=lambda item: (item.priority, item.eta_minutes))[:6]
+    ]
+
+    watchlist = []
+    if assess_result.readiness_gap:
+        watchlist.append(f"Readiness gaps to resolve: {assess_result.readiness_gap}")
+    if assess_result.assumptions:
+        watchlist.append("Assess assumptions: " + ", ".join(assess_result.assumptions))
+    if plan_result.actionability.missing_data:
+        watchlist.append("Plan missing data: " + ", ".join(plan_result.actionability.missing_data))
+    if include_inbox and inbox_result and any(
+        item.confidence >= 0.85 for item in inbox_result.confidence_ranked_incident_cards
+    ):
+        watchlist.append("High-confidence incidents require active escalation routing.")
+    if include_simulate and simulate_result and simulate_result.predicted_impact_by_segment:
+        top_segment = simulate_result.predicted_impact_by_segment[0].segment
+        watchlist.append(f"Monitor highest-impact segment first: {top_segment}")
+
+    if not watchlist:
+        watchlist.append("No immediate risks beyond standard protocol.")
+
+    return AgentOutput(
+        scenario=assess_payload.neighborhood_profile.name,
+        mission="Adaptive neighborhood resilience guidance across assess/plan/monitor loops.",
+        included_modules=included_modules,
+        assessed_risk=assess_result.risk_score,
+        readiness_gap=assess_result.readiness_gap,
+        immediate_actions=immediate_actions,
+        watchlist=watchlist,
+        assess=assess_result,
+        plan=plan_result,
+        inbox=inbox_result,
+        simulate=simulate_result,
+        confidence=confidence,
+        evidence_references=_merge_evidence(
+            assess_payload.neighborhood_profile.name,
+            assess_result.risk_score,
+            plan_result.assessed_risk,
+            assess_payload.forecast_summary.alerts,
+        ),
+        actionability=_combine_actionability(actionability_sources),
     )

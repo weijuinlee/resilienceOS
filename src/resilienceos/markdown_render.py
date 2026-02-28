@@ -56,6 +56,37 @@ Materials: {{ payload.materials_checklist | join(", ") }}
 Council rank: {{ payload.council_review.final_rank }}
 """
     ),
+    "agent": Template(
+        """# Resilience Agent Bundle
+
+Neighborhood: {{ payload.scenario }}
+Mission: {{ payload.mission }}
+Included modules: {{ payload.included_modules | join(", ") }}
+Assessed risk: {{ payload.assessed_risk }}
+Confidence: {{ payload.confidence }}
+Readiness gap: {{ payload.readiness_gap or "none" }}
+
+## Immediate actions
+{% for action in payload.immediate_actions %}
+- {{ action }}
+{% endfor %}
+
+## Watchlist
+{% for item in payload.watchlist %}
+- {{ item }}
+{% endfor %}
+
+## Assess top risks
+{% for item in payload.assess.top_hazard_triggers %}
+- {{ item.name }}: {{ item.reason }}
+{% endfor %}
+
+## Plan focus
+24h: {{ payload.plan.time_horizon_plan["24h"] | length }} actions
+6h: {{ payload.plan.time_horizon_plan["6h"] | length }} actions
+1h: {{ payload.plan.time_horizon_plan["1h"] | length }} actions
+"""
+    ),
     "drill": Template(
         """# Drill
 
@@ -132,4 +163,3 @@ def render(payload: Any, command: str) -> str:
     if tpl is None:
         return json.dumps(payload_data, indent=2)
     return tpl.render(payload=payload_data)
-
