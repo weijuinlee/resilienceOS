@@ -1,13 +1,13 @@
 [build-system]
-requires = ["setuptools>=75.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=40.8.0"]
+build-backend = "setuptools.build_meta:__legacy__"
 
 [project]
 name = "resilienceos"
 description = "AI resilience agent for neighborhood environmental crisis preparedness"
 version = "0.1.0"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 dependencies = [
   "typer>=0.12",
   "pydantic>=2.8",

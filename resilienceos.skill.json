@@ -7,27 +7,227 @@
   "commands": [
     {
       "name": "assess",
-      "description": "Ingest forecast, infrastructure and population profile to produce risk and readiness scores."
+      "description": "Ingest forecast, infrastructure and population profile to produce risk and readiness scores.",
+      "arguments": [
+        {
+          "name": "input",
+          "type": "string",
+          "description": "Path to JSON input payload.",
+          "required": false
+        },
+        {
+          "name": "scenario",
+          "type": "string",
+          "description": "Built-in scenario key.",
+          "required": false,
+          "default": "singapore"
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "description": "Path to save output JSON.",
+          "required": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "Output format.",
+          "required": false,
+          "default": "json",
+          "choices": [
+            "json",
+            "markdown"
+          ]
+        }
+      ]
     },
     {
       "name": "plan",
-      "description": "Generate 24h/6h/1h action plans, task assignments, routes and materials checklist."
+      "description": "Generate 24h/6h/1h action plans, task assignments, routes and materials checklist.",
+      "arguments": [
+        {
+          "name": "input",
+          "type": "string",
+          "description": "Path to JSON input payload for plan command.",
+          "required": false
+        },
+        {
+          "name": "scenario",
+          "type": "string",
+          "description": "Built-in scenario key.",
+          "required": false,
+          "default": "singapore"
+        },
+        {
+          "name": "assessed_risk",
+          "type": "integer",
+          "description": "Optional assessed risk override for demo runs.",
+          "required": false,
+          "minimum": 0,
+          "maximum": 100
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "description": "Path to save output JSON.",
+          "required": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "Output format.",
+          "required": false,
+          "default": "json",
+          "choices": [
+            "json",
+            "markdown"
+          ]
+        }
+      ]
     },
     {
       "name": "drill",
-      "description": "Evaluate drill compliance, missed steps, and produce a corrected template."
+      "description": "Evaluate drill compliance, missed steps, and produce a corrected template.",
+      "arguments": [
+        {
+          "name": "input",
+          "type": "string",
+          "description": "Path to JSON input payload for drill command.",
+          "required": false
+        },
+        {
+          "name": "scenario",
+          "type": "string",
+          "description": "Built-in scenario key.",
+          "required": false,
+          "default": "singapore"
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "description": "Path to save output JSON.",
+          "required": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "Output format.",
+          "required": false,
+          "default": "json",
+          "choices": [
+            "json",
+            "markdown"
+          ]
+        }
+      ]
     },
     {
       "name": "inbox",
-      "description": "Cluster social/media snippets and output escalation decisions."
+      "description": "Cluster social/media snippets and output escalation decisions.",
+      "arguments": [
+        {
+          "name": "input",
+          "type": "string",
+          "description": "Path to JSON input payload for inbox command.",
+          "required": false
+        },
+        {
+          "name": "scenario",
+          "type": "string",
+          "description": "Built-in scenario key.",
+          "required": false,
+          "default": "singapore"
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "description": "Path to save output JSON.",
+          "required": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "Output format.",
+          "required": false,
+          "default": "json",
+          "choices": [
+            "json",
+            "markdown"
+          ]
+        }
+      ]
     },
     {
       "name": "explain",
-      "description": "Explain generated outputs in plain language with assumptions and evidence references."
+      "description": "Explain generated outputs in plain language with assumptions and evidence references.",
+      "arguments": [
+        {
+          "name": "input",
+          "type": "string",
+          "description": "Path to JSON input payload containing generated_plan.",
+          "required": false
+        },
+        {
+          "name": "scenario",
+          "type": "string",
+          "description": "Built-in scenario key.",
+          "required": false,
+          "default": "singapore"
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "description": "Path to save output JSON.",
+          "required": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "Output format.",
+          "required": false,
+          "default": "json",
+          "choices": [
+            "json",
+            "markdown"
+          ]
+        }
+      ]
     },
     {
       "name": "simulate",
-      "description": "Predict neighborhood segment impact from hypothetical flood scenarios."
+      "description": "Predict neighborhood segment impact from hypothetical flood scenarios.",
+      "arguments": [
+        {
+          "name": "input",
+          "type": "string",
+          "description": "Path to JSON payload for simulation.",
+          "required": false
+        },
+        {
+          "name": "scenario",
+          "type": "string",
+          "description": "Built-in scenario key.",
+          "required": false,
+          "default": "singapore"
+        },
+        {
+          "name": "output",
+          "type": "string",
+          "description": "Path to save output JSON.",
+          "required": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "Output format.",
+          "required": false,
+          "default": "json",
+          "choices": [
+            "json",
+            "markdown"
+          ]
+        }
+      ]
     }
   ],
   "storage": {

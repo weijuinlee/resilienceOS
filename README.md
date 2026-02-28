@@ -1,6 +1,8 @@
 # resilienceOS
 
 resilienceOS is a production-ready **Codex Skill plugin** for neighborhood flood preparedness.
+All commands emit **JSON by default** for automation and orchestrator parsing.
+Use `--format markdown` only when you want a human-readable summary.
 
 It is built for one-person, demo-ready deployments and runs locally first with deterministic outputs.
 
@@ -60,7 +62,7 @@ Hook points for API sources are in `src/resilienceos/utils.py` (`load_input`) an
 
 ```bash
 pip install -e .
-resilienceos assess --scenario singapore --format json
+resilienceos assess --scenario singapore
 resilienceos plan --scenario singapore --format markdown
 resilienceos drill --scenario singapore
 resilienceos inbox --scenario singapore
@@ -82,4 +84,3 @@ A full run typically finishes well under 60 seconds for small fixture payloads.
 - `src/resilienceos/` command handlers, models, and scoring logic
 - `fixtures/` dry-run scenarios and data
 - `outputs/` generated example outputs
-
