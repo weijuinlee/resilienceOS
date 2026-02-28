@@ -10,6 +10,7 @@ set -euo pipefail
 : "${DEMO_ASSESSED_RISK:=90}"
 : "${DEMO_INPUT:=}"
 : "${DEMO_OVERRIDE_RISK:=true}"
+: "${DEMO_PRESET_NAME:=}"
 DEMO_ORIG_PORT="${DEMO_PORT}"
 
 DEMO_PORT="$(
@@ -47,8 +48,12 @@ if [ "${DEMO_OVERRIDE_RISK}" = "true" ]; then
 else
   DEMO_OVERRIDE_PARAM="override_risk=false"
 fi
+DEMO_PRESET_PARAM=""
+if [ -n "${DEMO_PRESET_NAME}" ]; then
+  DEMO_PRESET_PARAM="&preset=${DEMO_PRESET_NAME}"
+fi
 
-DEMO_URL="http://127.0.0.1:${DEMO_PORT}/?command=${DEMO_COMMAND}&scenario=${DEMO_SCENARIO}&include_inbox=${DEMO_INCLUDE_INBOX}&include_simulate=${DEMO_INCLUDE_SIMULATE}&autostart=1&${DEMO_OVERRIDE_PARAM}"
+DEMO_URL="http://127.0.0.1:${DEMO_PORT}/?command=${DEMO_COMMAND}&scenario=${DEMO_SCENARIO}&include_inbox=${DEMO_INCLUDE_INBOX}&include_simulate=${DEMO_INCLUDE_SIMULATE}&autostart=1&${DEMO_OVERRIDE_PARAM}${DEMO_PRESET_PARAM}"
 
 if [ -n "${DEMO_INPUT}" ]; then
   ENCODED_INPUT="$(python3 - <<'PY'

@@ -28,6 +28,40 @@ from resilienceos.models import (
 from resilienceos.utils import PluginInputError, SCENARIOS, load_input
 
 
+PRESET_DEFINITIONS = {
+    "manual": {
+        "label": "Manual",
+        "command": "assess",
+        "scenario": "singapore",
+        "input": "",
+        "override_risk": "false",
+        "assessed_risk": "90",
+        "include_inbox": "false",
+        "include_simulate": "false",
+    },
+    "judge": {
+        "label": "Judge",
+        "command": "agent",
+        "scenario": "singapore",
+        "input": "",
+        "override_risk": "true",
+        "assessed_risk": "90",
+        "include_inbox": "true",
+        "include_simulate": "true",
+    },
+    "high-risk": {
+        "label": "High risk",
+        "command": "agent",
+        "scenario": "singapore",
+        "input": "",
+        "override_risk": "true",
+        "assessed_risk": "95",
+        "include_inbox": "true",
+        "include_simulate": "true",
+    },
+}
+
+
 def _query_param(name: str, default: str = "") -> str:
     params = st.query_params
     if not params:
@@ -140,6 +174,45 @@ def _safe_run(
     return None
 
 
+def _preset_for(name: str) -> dict:
+    return PRESET_DEFINITIONS.get(name, PRESET_DEFINITIONS["manual"])
+
+
+def _decision_summary(payload: dict) -> list[tuple[str, str]]:
+    summary_items = []
+
+    if "risk_score" in payload:
+        summary_items.append(("Primary risk", str(payload["risk_score"])))
+    elif "assessed_risk" in payload:
+        summary_items.append(("Assessed risk", str(payload["assessed_risk"])))
+
+    if "confidence" in payload:
+        summary_items.append(("Confidence", f"{payload['confidence']:.2f}"))
+
+    actionability = payload.get("actionability", {})
+    if isinstance(actionability, dict):
+        minutes = actionability.get("estimated_minutes_to_act")
+        owner = actionability.get("recommended_owner")
+        if minutes is not None:
+            summary_items.append(("Action ETA", f"{minutes} min"))
+        if owner:
+            summary_items.append(("Recommended owner", owner))
+
+    readiness_scores = payload.get("readiness_scores")
+    if isinstance(readiness_scores, dict):
+        readiness_gap = payload.get("readiness_gap")
+        if readiness_gap:
+            summary_items.append(("Readiness gap", str(readiness_gap)))
+        if readiness_scores:
+            try:
+                weakest = min(readiness_scores.values())
+                summary_items.append(("Weakest readiness", f"{weakest}"))
+            except (TypeError, ValueError):
+                pass
+
+    return summary_items
+
+
 st.set_page_config(page_title="resilienceOS Dashboard", layout="wide")
 st.title("resilienceOS AI Dashboard")
 st.caption("Visual command runner for neighborhood resilience scenarios")
@@ -156,11 +229,24 @@ command_options = [
 ]
 
 st.sidebar.header("Command")
-default_command = _query_param("command", "assess")
+selected_preset = _query_param("preset", "manual")
+if selected_preset not in PRESET_DEFINITIONS:
+    selected_preset = "manual"
+
+preset_defaults = _preset_for(selected_preset)
+selected_preset = st.sidebar.selectbox(
+    "Demo preset",
+    options=list(PRESET_DEFINITIONS.keys()),
+    index=list(PRESET_DEFINITIONS.keys()).index(selected_preset),
+    format_func=lambda key: PRESET_DEFINITIONS[key]["label"],
+)
+preset_defaults = _preset_for(selected_preset)
+
+default_command = _query_param("command", preset_defaults["command"])
 if default_command not in command_options:
     default_command = "assess"
 
-default_scenario = _query_param("scenario", scenario_options[0])
+default_scenario = _query_param("scenario", preset_defaults["scenario"])
 if default_scenario not in scenario_options:
     default_scenario = scenario_options[0]
 
@@ -168,6 +254,8 @@ command = st.sidebar.selectbox("Module", command_options, index=command_options.
 scenario = st.sidebar.selectbox("Scenario", scenario_options, index=scenario_options.index(default_scenario))
 
 default_input = _query_param("input", "")
+if not default_input:
+    default_input = preset_defaults["input"]
 input_file = st.sidebar.text_input(
     "Optional input file",
     placeholder="fixtures/scenario_singapore_coastal.json",
@@ -180,10 +268,11 @@ assessed_risk_override = None
 if command in {"plan", "agent"}:
     use_override = st.sidebar.toggle(
         "Override assessed risk",
-        value=_query_param("override_risk", "false").lower() in {"1", "true", "yes", "on"},
+        value=_query_param("override_risk", preset_defaults["override_risk"]).lower()
+        in {"1", "true", "yes", "on"},
     )
     if use_override:
-        assessed_risk_default = _query_int("assessed_risk", 90)
+        assessed_risk_default = _query_int("assessed_risk", int(preset_defaults["assessed_risk"]))
         assessed_risk_override = st.sidebar.slider(
             "assessed-risk",
             0,
@@ -193,8 +282,14 @@ if command in {"plan", "agent"}:
         )
 
 if command == "agent":
-    include_inbox = st.sidebar.toggle("Include inbox", value=_query_flag("include_inbox", True))
-    include_simulate = st.sidebar.toggle("Include simulate", value=_query_flag("include_simulate", True))
+    include_inbox = st.sidebar.toggle(
+        "Include inbox",
+        value=_query_flag("include_inbox", preset_defaults["include_inbox"] == "true"),
+    )
+    include_simulate = st.sidebar.toggle(
+        "Include simulate",
+        value=_query_flag("include_simulate", preset_defaults["include_simulate"] == "true"),
+    )
 
 run_label = f"Run {command.title()}"
 auto_run = _query_flag("autostart", False)
@@ -224,6 +319,14 @@ if should_run:
 
         payload = _serialize(payload_object)
         st.success(f"{command.title()} complete")
+        st.markdown("### Decision summary")
+        summary_items = _decision_summary(payload)
+        if summary_items:
+            summary_columns = st.columns(min(4, len(summary_items)) or 1)
+            for index, (label, value) in enumerate(summary_items):
+                summary_columns[index % len(summary_columns)].metric(label, value)
+        else:
+            st.info("Decision summary not available for this payload shape.")
 
         st.subheader("Summary")
         col1, col2, col3 = st.columns(3)
@@ -258,6 +361,9 @@ if should_run:
             for item in payload["immediate_actions"]:
                 st.write(f"- {item}")
 
+        with st.expander("Raw JSON payload"):
+            st.json(payload)
+
         if "incident_clusters" in payload:
             st.write("### Incident clusters")
             st.json(payload["incident_clusters"])
@@ -265,9 +371,6 @@ if should_run:
         if "plain_language_rationale" in payload:
             st.write("### Rationale")
             st.write(payload["plain_language_rationale"])
-
-        st.write("### Raw payload")
-        st.json(payload)
 else:
     st.info("Pick a command and click run to generate outputs.")
 

@@ -13,7 +13,7 @@ DEMO_SCREENSHOT ?= outputs/resilienceos-dashboard-demo.png
 DEMO_PORT ?= 8501
 DEMO_PRESET ?= scripts/demo-presets/judge.env
 
-.PHONY: help install install-offline smoke smoke-direct smoke-installed smoke-fast smoke-agent smoke-fail smoke-input smoke-skill ui demo-ui demo-shot demo-local demo-local-shot codex-link clean
+.PHONY: help install install-offline smoke smoke-direct smoke-installed smoke-fast smoke-agent smoke-fail smoke-input smoke-skill ui demo-ui demo-shot demo-local demo-local-judge demo-local-highrisk demo-local-shot demo-shot-highrisk codex-link clean
 
 help:
 	@echo "Targets:"
@@ -30,6 +30,9 @@ help:
 	@echo "  demo-ui        - launch one-click Streamlit judge demo with preloaded command/scenario"
 	@echo "  demo-local     - one-click judge preset demo (no env vars needed)"
 	@echo "  demo-local-shot - one-click judge preset screenshot capture (requires Playwright)"
+	@echo "  demo-local-judge - explicit one-click judge preset run"
+	@echo "  demo-local-highrisk - one-click high-risk preset demo"
+	@echo "  demo-shot-highrisk - one-click high-risk screenshot capture (requires Playwright)"
 	@echo "  demo-shot      - run one-click demo and capture screenshot (requires Playwright)"
 	@echo "  codex-link     - link repo as ~/.codex/skills/resilienceOS"
 	@echo "  clean          - remove .venv"
@@ -112,6 +115,12 @@ demo-local:
 	VENV_BIN=$(VENV_BIN) \
 	bash scripts/resilienceos-demo-ui.sh
 
+demo-local-judge:
+	@DEMO_PRESET=scripts/demo-presets/judge.env $(MAKE) demo-local
+
+demo-local-highrisk:
+	@DEMO_PRESET=scripts/demo-presets/high-risk.env $(MAKE) demo-local
+
 demo-local-shot:
 	@set -a; \
 	if [ -f "$(DEMO_PRESET)" ]; then \
@@ -123,6 +132,9 @@ demo-local-shot:
 	set +a; \
 	VENV_BIN=$(VENV_BIN) \
 	bash scripts/resilienceos-demo-shot.sh
+
+demo-shot-highrisk:
+	@DEMO_PRESET=scripts/demo-presets/high-risk.env $(MAKE) demo-local-shot
 
 smoke-agent: smoke-direct
 

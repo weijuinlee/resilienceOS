@@ -167,7 +167,16 @@ If you want an automatic screenshot from the same preset:
 make demo-local-shot
 ```
 
-Preset file: `scripts/demo-presets/judge.env`
+Use the high-risk preset when you want stronger urgency and deeper response pressure in the demo:
+
+```bash
+make demo-local-highrisk
+make demo-shot-highrisk
+```
+
+Preset files:
+- `scripts/demo-presets/judge.env`
+- `scripts/demo-presets/high-risk.env`
 
 Output notes for judges:
 - `assess` returns a machine-readable readiness/risk payload.
