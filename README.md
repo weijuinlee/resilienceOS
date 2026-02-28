@@ -77,7 +77,8 @@ Quick local setup:
 
 ```bash
 cp openai.env.example .env.openai
-# then set your real key in .env.openai
+# put your real key in .env.openai
+# Works with either raw key-value lines or `export KEY=...`.
 ```
 
 When configured, `explain` outputs (and anything that auto-generates `plain_language_rationale`, such as `--format concise_brief` and the Streamlit "Concise brief" panel) will use LLM-powered explanation text when available.

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
+import json
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any, Dict, List
 
 from .evaluation import build_council_review, score_recommendation
@@ -61,11 +63,78 @@ def _merge_evidence(*items: Any) -> List[str]:
     return refs[:6]
 
 
+def _read_env_file(path: Path) -> Dict[str, str]:
+    values: Dict[str, str] = {}
+    if not path.exists():
+        return values
+
+    try:
+        for raw_line in path.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+
+            if "#" in line:
+                line = line.split("#", 1)[0].rstrip()
+
+            if line.lower().startswith("export "):
+                line = line[7:].strip()
+
+            if "=" not in line:
+                continue
+
+            key, value = line.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip().strip("\"").strip("'")
+
+            if key:
+                values[key] = value
+    except OSError:
+        return {}
+    return values
+
+
+def _candidate_env_files() -> List[Path]:
+    candidates: List[Path] = []
+    custom = os.getenv("RESILIENCEOS_OPENAI_ENV_FILE")
+    if custom:
+        candidates.append(Path(custom))
+    else:
+        candidates.extend(
+            [
+                Path(".env.openai"),
+                Path(".env"),
+                Path(".env.local"),
+                Path(".env.openai.local"),
+                Path(".env.openai.dev"),
+            ]
+        )
+
+    repo_root = Path(__file__).resolve().parents[2]
+    repo_candidates = [
+        repo_root / ".env.openai",
+        repo_root / ".env",
+        repo_root / ".env.local",
+        repo_root / ".env.openai.local",
+        repo_root / ".env.openai.dev",
+    ]
+    candidates.extend(repo_candidates)
+    return candidates
+
+
 def _openai_api_key() -> str | None:
     for key in ("OPENAI_API_KEY", "RESILIENCEOS_OPENAI_API_KEY", "RESILIENCE_OS_OPENAI_API_KEY"):
         value = os.getenv(key, "")
         if value:
             return value
+
+    for env_file in _candidate_env_files():
+        env_values = _read_env_file(env_file)
+        for key in ("OPENAI_API_KEY", "RESILIENCEOS_OPENAI_API_KEY", "RESILIENCE_OS_OPENAI_API_KEY"):
+            value = env_values.get(key, "").strip()
+            if value:
+                return value
+
     return None
 
 
